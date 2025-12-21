@@ -11,7 +11,6 @@ use App\Http\Controllers\Gudang\PurchaseOrderController;
 // Manajer
 use App\Http\Controllers\Manajer\DashboardManajerController;
 use App\Http\Controllers\Manajer\SupplierController;
-use App\Http\Controllers\Manajer\UserManagementController;
 
 // Supplier
 use App\Http\Controllers\Supplier\SupplierPOController;
@@ -24,6 +23,8 @@ use App\Http\Controllers\Kurir\PengirimanController;
 
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserManagementController;
+
 /*
 |--------------------------------------------------------------------------
 | ROUTE LOGIN
@@ -50,7 +51,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::delete('/produk/{id}', 'delete')->name('.delete');
+        Route::get('/', 'index');
+    });
 
+    Route::prefix('user-management')->name('usermanagement')->controller(UserManagementController::class)->group(function () {
+        Route::get('/form/{id?}', 'form')->name('.form');
+        Route::post('/save/{id?}', 'save')->name('.save');
         Route::get('/', 'index');
     });
 });
@@ -83,9 +89,6 @@ Route::middleware(['auth', 'role:Manajer'])->group(function () {
 
     Route::get('/manajer/supplier', [SupplierController::class, 'index']);
     Route::post('/manajer/supplier', [SupplierController::class, 'store']);
-
-    Route::get('/manajer/user/create', [UserManagementController::class, 'create']);
-    Route::post('/manajer/user', [UserManagementController::class, 'store']);
 });
 
 /*
