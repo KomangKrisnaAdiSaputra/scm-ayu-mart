@@ -28,7 +28,7 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
-            return redirect()->route('general.dashboard');
+            return redirect()->route('dashboard');
             // return match (auth()->user()->role) {
             //     'Gudang'   => redirect('/gudang'),
             //     'Manajer'  => redirect('/manajer'),

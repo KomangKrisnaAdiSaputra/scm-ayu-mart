@@ -16,6 +16,40 @@
     <link rel="stylesheet" href="{{ asset('../assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('../assets/css/components.css') }}">
 
+    <style>
+        .flash-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 340px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        /* Stack otomatis */
+        .flash-alert:nth-of-type(2) {
+            top: 95px;
+        }
+
+        .flash-alert:nth-of-type(3) {
+            top: 170px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+
+
+    </style>
     @yield('css')
 </head>
 
@@ -33,7 +67,7 @@
                 </form>
 
                 <ul class="navbar-nav navbar-right">
-                    <li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown"
+                    {{-- <li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown"
                             class="nav-link notification-toggle nav-link-lg beep"><i class="far fa-bell"></i></a>
                         <div class="dropdown-menu dropdown-list dropdown-menu-right">
                             <div class="dropdown-header">Notifications
@@ -56,11 +90,11 @@
                                 <a href="#">View All <i class="fas fa-chevron-right"></i></a>
                             </div>
                         </div>
-                    </li>
+                    </li> --}}
                     <li class="dropdown"><a href="#" data-toggle="dropdown"
                             class="nav-link dropdown-toggle nav-link-lg nav-link-user">
                             <img alt="image" src="../assets/img/avatar/avatar-1.png" class="rounded-circle mr-1">
-                            <div class="d-sm-none d-lg-inline-block">Hi, Ujang Maman</div>
+                            <div class="d-sm-none d-lg-inline-block">Hi, {{ auth()->user()->nama }}</div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right">
                             <div class="dropdown-title">Logged in 5 min ago</div>
@@ -96,10 +130,21 @@
                     </div>
                     <ul class="sidebar-menu">
                         {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li class="active">
-                            <a class="nav-link" href="#">
+                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Dashboard' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('dashboard') }}">
                                 <i class="fas fa-fire"></i>
                                 <span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="sidebar-menu">
+                        {{-- <li class="menu-header">Dashboard</li> --}}
+                        <li
+                            class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('produk') }}">
+                                <i class="fas fa-fire"></i>
+                                <span>Manajemen Produk</span>
                             </a>
                         </li>
                     </ul>
@@ -111,8 +156,23 @@
                 <section class="section">
                     <div class="section-header">
                         <h1>@yield('titlePage')</h1>
+                        @if (isset($breadcrumbs) && count($breadcrumbs) > 0)
+                            <div class="section-header-breadcrumb">
+                                @foreach ($breadcrumbs as $breadcrumb)
+                                    <div class="breadcrumb-item {{ $breadcrumb['active'] }}">
+                                        @if (isset($breadcrumb['url']) && $breadcrumb['url'])
+                                            <a href="{{ $breadcrumb['url'] }}">{{ $breadcrumb['label'] }}</a>
+                                        @else
+                                            {{ $breadcrumb['label'] }}
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                    @yield('app')
+                    <div class="section-body">
+                        @yield('app')
+                    </div>
                 </section>
             </div>
             <footer class="main-footer">
@@ -124,6 +184,40 @@
             </footer>
         </div>
     </div>
+
+    {{-- SUCCESS --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show shadow flash-alert">
+            <i class="fas fa-check-circle mr-1"></i>
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    @endif
+
+    {{-- WARNING --}}
+    @if (session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show shadow flash-alert">
+            <i class="fas fa-exclamation-triangle mr-1"></i>
+            {{ session('warning') }}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    @endif
+
+    {{-- ERROR --}}
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show shadow flash-alert">
+            <i class="fas fa-times-circle mr-1"></i>
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    @endif
+
 
     <!-- General JS Scripts -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
@@ -144,6 +238,15 @@
 
     <!-- Page Specific JS File -->
     <script src="{{ asset('../assets/js/page/index.js') }}"></script>
+
+    <script>
+        document.querySelectorAll('.flash-alert').forEach((alert, index) => {
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 600);
+            }, 9000 + (index * 700)); // ±9–10 detik
+        });
+    </script>
 
     @yield('js')
 </body>

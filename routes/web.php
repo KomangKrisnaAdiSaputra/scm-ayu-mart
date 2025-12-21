@@ -10,7 +10,6 @@ use App\Http\Controllers\Gudang\PurchaseOrderController;
 
 // Manajer
 use App\Http\Controllers\Manajer\DashboardManajerController;
-use App\Http\Controllers\Manajer\ProdukController;
 use App\Http\Controllers\Manajer\SupplierController;
 use App\Http\Controllers\Manajer\UserManagementController;
 
@@ -19,10 +18,12 @@ use App\Http\Controllers\Supplier\SupplierPOController;
 
 // Cabang
 use App\Http\Controllers\Cabang\PermintaanCabangController;
-use App\Http\Controllers\General\DashboardController;
+
 // Kurir
 use App\Http\Controllers\Kurir\PengirimanController;
 
+use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\DashboardController;
 /*
 |--------------------------------------------------------------------------
 | ROUTE LOGIN
@@ -42,8 +43,16 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 | ROUTE GENERAL
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->name('general')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('.dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
+        Route::get('/form/{id?}', 'form')->name('.form');
+        Route::post('/save/{id?}', 'save')->name('.save');
+        Route::delete('/produk/{id}', 'delete')->name('.delete');
+
+        Route::get('/', 'index');
+    });
 });
 
 /*
@@ -70,8 +79,7 @@ Route::middleware(['auth', 'role:Manajer'])->group(function () {
 
     Route::get('/manajer', [DashboardManajerController::class, 'index']);
 
-    Route::get('/manajer/produk', [ProdukController::class, 'index']);
-    Route::post('/manajer/produk', [ProdukController::class, 'store']);
+
 
     Route::get('/manajer/supplier', [SupplierController::class, 'index']);
     Route::post('/manajer/supplier', [SupplierController::class, 'store']);
