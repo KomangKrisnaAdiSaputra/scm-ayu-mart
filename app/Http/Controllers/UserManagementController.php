@@ -16,13 +16,12 @@ class UserManagementController extends Controller
     {
         $search = $request->query('search');
 
-        $user = User::when($search, function ($query, $search) {
+        $user = User::with(['supplier', 'cabang'])->when($search, function ($query, $search) {
             $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('username', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('role', 'like', "%{$search}%");
         })->get();
-
         return view('user_management.index', compact('user', 'search'));
     }
 

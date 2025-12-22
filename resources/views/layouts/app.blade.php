@@ -26,7 +26,6 @@
             animation: slideIn 0.4s ease-out;
         }
 
-        /* Stack otomatis */
         .flash-alert:nth-of-type(2) {
             top: 95px;
         }
@@ -149,15 +148,18 @@
                         </li>
                     </ul>
 
-                    <ul class="sidebar-menu">
-                        {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen User' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('usermanagement') }}">
-                                <i class="fas fa-fire"></i>
-                                <span>Manajemen User</span>
-                            </a>
-                        </li>
-                    </ul>
+                    @if (auth()->user()->role == 'Manajer')
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen User' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('usermanagement') }}">
+                                    <i class="fas fa-fire"></i>
+                                    <span>Manajemen User</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
                 </aside>
             </div>
 

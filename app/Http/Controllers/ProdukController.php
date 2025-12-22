@@ -12,7 +12,7 @@ class ProdukController extends Controller
     {
         $search = $request->query('search');
 
-        $produk = Produk::when($search, function ($query, $search) {
+        $produk = Produk::with(['stok'])->when($search, function ($query, $search) {
             $query->where('kode_produk', 'like', "%{$search}%")
                 ->orWhere('nama_produk', 'like', "%{$search}%");
         })->get();

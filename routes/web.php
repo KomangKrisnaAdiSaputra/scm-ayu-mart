@@ -32,7 +32,7 @@ use App\Http\Controllers\UserManagementController;
 */
 
 Route::get('/', function () {
-    return redirect('/login');
+    return auth()->check() ? redirect('/dashboard') : redirect('/login');
 });
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::prefix('user-management')->name('usermanagement')->controller(UserManagementController::class)->group(function () {
+    Route::middleware(['role:Manajer'])->prefix('user-management')->name('usermanagement')->controller(UserManagementController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::get('/', 'index');
