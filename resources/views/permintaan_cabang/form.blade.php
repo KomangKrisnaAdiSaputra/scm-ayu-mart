@@ -3,8 +3,8 @@
 
 @php
     $breadcrumbs = [
-        ['label' => 'Manajemen Produk', 'url' => route('produk'), 'active' => 'active'],
-        ['label' => isset($id) && $id ? 'Edit Produk' : 'Tambah Produk', 'url' => '', 'active' => ''],
+        ['label' => 'Pemintaan Cabang', 'url' => route('permintaancabang'), 'active' => 'active'],
+        ['label' => 'Form Permintaan', 'url' => '', 'active' => ''],
     ];
 @endphp
 @section('app')

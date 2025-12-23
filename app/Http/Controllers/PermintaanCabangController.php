@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\PermintaanCabang;
 use App\Models\DetailPermintaanCabang;
+use App\Models\Pengiriman;
 use App\Models\Produk;
 use App\Models\StokGudang;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -144,6 +146,12 @@ class PermintaanCabangController extends Controller
                         // ✅ kurangi stok
                         $stok->decrement('stok_total', $item->qty_permintaan);
                     }
+
+                    Pengiriman::create([
+                        'permintaan_id' => $permintaan->permintaan_id,
+                        'tanggal_kirim' => Carbon::now()->addDays(1),
+                        'status_pengiriman' => 'Diproses',
+                    ]);
                 }
 
                 // ✅ Update status permintaan

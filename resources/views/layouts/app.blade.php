@@ -171,6 +171,16 @@
                             </a>
                         </li>
                     </ul>
+
+                    <ul class="sidebar-menu">
+                        {{-- <li class="menu-header">Dashboard</li> --}}
+                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('pengiriman') }}">
+                                <i class="fas fa-fire"></i>
+                                <span>Pengiriman</span>
+                            </a>
+                        </li>
+                    </ul>
                 </aside>
             </div>
 

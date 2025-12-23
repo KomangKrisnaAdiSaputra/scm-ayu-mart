@@ -44,5 +44,14 @@ class UserSeeder extends Seeder
             'alamat'      => 'Alamat Cabang 1',
             'kontak'      => '081234567890'
         ]);
+
+        User::create([
+            'username' => 'kurir',
+            'password' => Hash::make('123456'),
+            'role' => 'Kurir',
+            'nama' => 'Kurir Ayu Mart',
+            'email' => 'kurir@ayu.com',
+            'is_active' => 1
+        ]);
     }
 }

@@ -11,13 +11,11 @@ use App\Http\Controllers\Gudang\PurchaseOrderController;
 // Supplier
 use App\Http\Controllers\Supplier\SupplierPOController;
 
-// Kurir
-use App\Http\Controllers\Kurir\PengirimanController;
-
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
+use App\Http\Controllers\PengirimanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +59,11 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/', 'index');
     });
+
+    Route::prefix('pengiriman')->name('pengiriman')->controller(PengirimanController::class)->group(function () {
+        Route::get('ambil', 'ambil')->name('.ambil');
+        Route::get('/', 'index');
+    });
 });
 
 /*
@@ -87,15 +90,4 @@ Route::middleware(['auth', 'role:Supplier'])->group(function () {
 
     Route::get('/supplier', [SupplierPOController::class, 'index']);
     Route::post('/supplier/po/{id}', [SupplierPOController::class, 'updateStatus']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| ROUTE KURIR
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:Kurir'])->group(function () {
-
-    Route::get('/kurir', [PengirimanController::class, 'index']);
-    Route::post('/kurir/pengiriman/{id}', [PengirimanController::class, 'updateStatus']);
 });
