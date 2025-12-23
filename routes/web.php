@@ -8,15 +8,8 @@ use App\Http\Controllers\Gudang\DashboardGudangController;
 use App\Http\Controllers\Gudang\StokController;
 use App\Http\Controllers\Gudang\PurchaseOrderController;
 
-// Manajer
-use App\Http\Controllers\Manajer\DashboardManajerController;
-use App\Http\Controllers\Manajer\SupplierController;
-
 // Supplier
 use App\Http\Controllers\Supplier\SupplierPOController;
-
-// Cabang
-use App\Http\Controllers\Cabang\PermintaanCabangController;
 
 // Kurir
 use App\Http\Controllers\Kurir\PengirimanController;
@@ -24,6 +17,7 @@ use App\Http\Controllers\Kurir\PengirimanController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\PermintaanCabangController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +53,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::get('/', 'index');
     });
+
+    Route::prefix('permintaan-cabang')->name('permintaancabang')->controller(PermintaanCabangController::class)->group(function () {
+        Route::get('/form/{id?}', 'form')->name('.form');
+        Route::post('/store', 'store')->name('.store');
+        Route::post('{id}/status', 'updateStatus')->name('.updatestatus');
+
+        Route::get('/', 'index');
+    });
 });
 
 /*
@@ -78,21 +80,6 @@ Route::middleware(['auth', 'role:Gudang'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ROUTE MANAJER
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:Manajer'])->group(function () {
-
-    Route::get('/manajer', [DashboardManajerController::class, 'index']);
-
-
-
-    Route::get('/manajer/supplier', [SupplierController::class, 'index']);
-    Route::post('/manajer/supplier', [SupplierController::class, 'store']);
-});
-
-/*
-|--------------------------------------------------------------------------
 | ROUTE SUPPLIER
 |--------------------------------------------------------------------------
 */
@@ -100,17 +87,6 @@ Route::middleware(['auth', 'role:Supplier'])->group(function () {
 
     Route::get('/supplier', [SupplierPOController::class, 'index']);
     Route::post('/supplier/po/{id}', [SupplierPOController::class, 'updateStatus']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| ROUTE CABANG
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:Cabang'])->group(function () {
-
-    Route::get('/cabang', [PermintaanCabangController::class, 'index']);
-    Route::post('/cabang/permintaan', [PermintaanCabangController::class, 'store']);
 });
 
 /*

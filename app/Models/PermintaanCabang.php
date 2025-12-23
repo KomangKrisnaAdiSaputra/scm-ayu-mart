@@ -21,4 +21,9 @@ class PermintaanCabang extends Model
     {
         return $this->hasMany(DetailPermintaanCabang::class, 'permintaan_id');
     }
+
+    public function cabang()
+    {
+        return $this->belongsTo(Cabang::class, 'cabang_id', 'cabang_id');
+    }
 }

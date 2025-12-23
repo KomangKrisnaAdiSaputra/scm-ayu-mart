@@ -160,6 +160,17 @@
                             </li>
                         </ul>
                     @endif
+
+                    <ul class="sidebar-menu">
+                        {{-- <li class="menu-header">Dashboard</li> --}}
+                        <li
+                            class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('permintaancabang') }}">
+                                <i class="fas fa-fire"></i>
+                                <span>Permintaan Cabang</span>
+                            </a>
+                        </li>
+                    </ul>
                 </aside>
             </div>
 
