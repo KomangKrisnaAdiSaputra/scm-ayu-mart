@@ -20,9 +20,9 @@ class PermintaanCabangController extends Controller
 
         $permintaan = PermintaanCabang::with(['detail.produk', 'cabang'])
             ->when(
-                !in_array(auth()->user()->role, ['Manager', 'Gudang']),
+                !in_array(auth()->user()->role, ['Manajer', 'Gudang']),
                 function ($query) {
-                    // 🔒 selain manager & gudang → filter cabang
+                    // 🔒 selain Manajer & gudang → filter cabang
                     $query->where('cabang_id', auth()->user()?->cabang?->cabang_id ?? null);
                 }
             )

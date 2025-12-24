@@ -137,7 +137,7 @@
                         </li>
                     </ul>
 
-                    @if (in_array(auth()->user()->role, ['Manager', 'Gudang']))
+                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
@@ -150,7 +150,7 @@
                         </ul>
                     @endif
 
-                    @if (in_array(auth()->user()->role, ['Manager']))
+                    @if (in_array(auth()->user()->role, ['Manajer']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
@@ -163,7 +163,7 @@
                         </ul>
                     @endif
 
-                    @if (in_array(auth()->user()->role, ['Manager', 'Gudang', 'Cabang']))
+                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Cabang']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li

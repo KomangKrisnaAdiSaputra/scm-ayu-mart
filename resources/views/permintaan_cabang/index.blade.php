@@ -31,7 +31,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         @php
-                            $isAllAccess = in_array(auth()->user()->role, ['Manager', 'Gudang']);
+                            $isAllAccess = in_array(auth()->user()->role, ['Manajer', 'Gudang']);
                         @endphp
 
                         <table class="table table-striped table-md">
