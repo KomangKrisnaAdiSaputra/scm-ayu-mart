@@ -10,12 +10,15 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // Jika belum login
         if (!auth()->check()) {
             return redirect('/login');
         }
 
-        // Jika role user tidak sesuai
+        // Gabungkan dan pecah role jika pakai |
+        $roles = collect($roles)
+            ->flatMap(fn($role) => explode('|', $role))
+            ->toArray();
+
         if (!in_array(auth()->user()->role, $roles)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini');
         }

@@ -137,18 +137,20 @@
                         </li>
                     </ul>
 
-                    <ul class="sidebar-menu">
-                        {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li
-                            class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('produk') }}">
-                                <i class="fas fa-fire"></i>
-                                <span>Manajemen Produk</span>
-                            </a>
-                        </li>
-                    </ul>
+                    @if (in_array(auth()->user()->role, ['Manager', 'Gudang']))
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('produk') }}">
+                                    <i class="fas fa-fire"></i>
+                                    <span>Manajemen Produk</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
 
-                    @if (auth()->user()->role == 'Manajer')
+                    @if (in_array(auth()->user()->role, ['Manager']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
@@ -161,16 +163,18 @@
                         </ul>
                     @endif
 
-                    <ul class="sidebar-menu">
-                        {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li
-                            class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('permintaancabang') }}">
-                                <i class="fas fa-fire"></i>
-                                <span>Permintaan Cabang</span>
-                            </a>
-                        </li>
-                    </ul>
+                    @if (in_array(auth()->user()->role, ['Manager', 'Gudang', 'Cabang']))
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('permintaancabang') }}">
+                                    <i class="fas fa-fire"></i>
+                                    <span>Permintaan Cabang</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
 
                     <ul class="sidebar-menu">
                         {{-- <li class="menu-header">Dashboard</li> --}}
@@ -264,6 +268,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.nicescroll/3.7.6/jquery.nicescroll.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="{{ asset('../assets/js/stisla.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
     <!-- Template JS File -->
     <script src="{{ asset('../assets/js/scripts.js') }}"></script>

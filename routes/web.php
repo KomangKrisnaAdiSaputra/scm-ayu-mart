@@ -39,7 +39,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::delete('/produk/{id}', 'delete')->name('.delete');
@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::prefix('permintaan-cabang')->name('permintaancabang')->controller(PermintaanCabangController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Cabang'])->prefix('permintaan-cabang')->name('permintaancabang')->controller(PermintaanCabangController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/store', 'store')->name('.store');
         Route::post('{id}/status', 'updateStatus')->name('.updatestatus');
@@ -61,7 +61,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('pengiriman')->name('pengiriman')->controller(PengirimanController::class)->group(function () {
-        Route::get('ambil', 'ambil')->name('.ambil');
+        Route::post('ambil', 'ambil')->name('.ambil');
+        Route::post('gagal', 'gagal')->name('.gagal');
+        Route::post('diterima', 'diterima')->name('.diterima');
         Route::get('/', 'index');
     });
 });

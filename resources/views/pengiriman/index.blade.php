@@ -32,6 +32,7 @@
                                     <th>Jumlah Produk</th>
                                     <th>Total Qty</th>
                                     <th>Status Pengiriman</th>
+                                    <th>Status Kurir</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -65,10 +66,26 @@
                                                     ? 'warning'
                                                     : ($item->status_pengiriman == 'Dikirim'
                                                         ? 'info'
-                                                        : ($item->status_pengiriman == 'Selesai'
+                                                        : ($item->status_pengiriman == 'Diterima'
                                                             ? 'success'
                                                             : 'danger')) }}">
                                                 {{ $item->status_pengiriman }}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            @php
+                                                $statusKurir = $item?->status_kurir?->status_kurir;
+                                                $badgeStatusKurir = match ($statusKurir) {
+                                                    'Dalam Pengiriman' => 'info',
+                                                    'Terkirim' => 'success',
+                                                    'Gagal' => 'danger',
+                                                    default => 'secondary',
+                                                };
+                                            @endphp
+
+                                            <span class="badge badge-{{ $badgeStatusKurir }}">
+                                                {{ $statusKurir ?? 'Belum Dikirim' }}
                                             </span>
                                         </td>
 
@@ -78,12 +95,26 @@
                                                 Detail
                                             </button>
 
-                                            {{-- @if (auth()->user()->role == 'Kurir' && $item->status_pengiriman == 'Diproses') --}}
-                                            <button class="btn btn-sm btn-success btn-ambil"
-                                                data-id="{{ $item->pengiriman_id }}">
-                                                Ambil Pengiriman
-                                            </button>
-                                            {{-- @endif --}}
+                                            @if (auth()->user()->role == 'Kurir' && $item->status_pengiriman == 'Diproses')
+                                                <button class="btn btn-sm btn-success btn-ambil"
+                                                    data-id="{{ $item->pengiriman_id }}">
+                                                    Ambil Pengiriman
+                                                </button>
+                                            @endif
+
+                                            @if (auth()->user()->role === 'Kurir' && $statusKurir === 'Dalam Pengiriman')
+                                                <button class="btn btn-sm btn-danger btn-gagal"
+                                                    data-id="{{ $item->pengiriman_id }}">
+                                                    Pengiriman Gagal
+                                                </button>
+                                            @endif
+
+                                            @if (auth()->user()->role === 'Cabang' && $item->status_pengiriman === 'Dikirim' && $statusKurir === 'Dalam Pengiriman')
+                                                <button class="btn btn-sm btn-success btn-terima"
+                                                    data-id="{{ $item->pengiriman_id }}">
+                                                    Diterima
+                                                </button>
+                                            @endif
 
                                         </td>
                                     </tr>
@@ -129,11 +160,35 @@
 
             let data = $(this).data('pengiriman');
 
+            // Pengiriman
             $('#d_pengiriman_id').text(data.pengiriman_id);
-            $('#d_tanggal').text(data.tanggal_kirim);
+            $('#d_tanggal').text(moment(data.tanggal_kirim).format('DD-MM-YYYY HH:mm'));
             $('#d_status').text(data.status_pengiriman);
-            $('#d_cabang').text(data.permintaan.cabang.nama_cabang ?? '-');
+            $('#d_cabang').text(data.permintaan?.cabang?.nama_cabang ?? '-');
 
+            // Permintaan
+            $('#d_permintaan_id').text(data.permintaan.permintaan_id);
+            $('#d_tgl_permintaan').text(
+                moment(data.permintaan.tanggal_permintaan).format('DD-MM-YYYY HH:mm')
+            );
+            $('#d_status_permintaan').text(data.permintaan.status_permintaan);
+
+            // Kurir
+            if (data.status_kurir) {
+                $('#d_nama_kurir').text(data.status_kurir.nama_kurir);
+                $('#d_status_kurir').text(data.status_kurir.status_kurir);
+                $('#d_waktu_update').text(
+                    moment(data.status_kurir.waktu_update).format('DD-MM-YYYY HH:mm')
+                );
+                $('#d_catatan').text(data.status_kurir.catatan ?? '-');
+            } else {
+                $('#d_nama_kurir').text('-');
+                $('#d_status_kurir').text('-');
+                $('#d_waktu_update').text('-');
+                $('#d_catatan').text('-');
+            }
+
+            // Detail Produk
             let html = '';
             let no = 1;
 
@@ -156,6 +211,17 @@
             let id = $(this).data('id');
             $('#ambil_pengiriman_id').val(id);
             $('#modalAmbilPengiriman').modal('show');
+        });
+
+        $(document).on('click', '.btn-gagal', function() {
+            let id = $(this).data('id');
+            $('#gagal_pengiriman_id').val(id);
+            $('#modalPengirimanGagal').modal('show');
+        });
+
+        $(document).on('click', '.btn-terima', function() {
+            $('#terima_pengiriman_id').val($(this).data('id'));
+            $('#modalTerimaPengiriman').modal('show');
         });
     </script>
 @endsection
@@ -181,12 +247,52 @@
                         <td id="d_tanggal"></td>
                     </tr>
                     <tr>
-                        <th>Status</th>
+                        <th>Status Pengiriman</th>
                         <td id="d_status"></td>
                     </tr>
                     <tr>
                         <th>Cabang</th>
                         <td id="d_cabang"></td>
+                    </tr>
+                </table>
+
+                <hr>
+
+                <h6>Informasi Permintaan</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th>ID Permintaan</th>
+                        <td id="d_permintaan_id"></td>
+                    </tr>
+                    <tr>
+                        <th>Tanggal Permintaan</th>
+                        <td id="d_tgl_permintaan"></td>
+                    </tr>
+                    <tr>
+                        <th>Status Permintaan</th>
+                        <td id="d_status_permintaan"></td>
+                    </tr>
+                </table>
+
+                <hr>
+
+                <h6>Informasi Kurir</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <th>Nama Kurir</th>
+                        <td id="d_nama_kurir"></td>
+                    </tr>
+                    <tr>
+                        <th>Status Kurir</th>
+                        <td id="d_status_kurir"></td>
+                    </tr>
+                    <tr>
+                        <th>Waktu Update</th>
+                        <td id="d_waktu_update"></td>
+                    </tr>
+                    <tr>
+                        <th>Catatan</th>
+                        <td id="d_catatan"></td>
                     </tr>
                 </table>
 
@@ -203,6 +309,7 @@
                     </thead>
                     <tbody id="detailProduk"></tbody>
                 </table>
+
 
             </div>
 
@@ -228,7 +335,7 @@
 
                     <div class="form-group">
                         <label>Nama Kurir</label>
-                        <input type="text" class="form-control" name="nama_kurir" value="{{ auth()->user()->name }}"
+                        <input type="text" class="form-control" name="nama_kurir" value="{{ auth()->user()->nama }}"
                             readonly>
                     </div>
 
@@ -242,6 +349,69 @@
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
                     <button class="btn btn-success">Ambil Pengiriman</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPengirimanGagal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="POST" action="{{ route('pengiriman.gagal') }}">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">Pengiriman Gagal</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" name="pengiriman_id" id="gagal_pengiriman_id">
+
+                    <div class="form-group">
+                        <label>Catatan Gagal <span class="text-danger">*</span></label>
+                        <textarea name="catatan" class="form-control" rows="3" required
+                            placeholder="Contoh: Alamat tidak ditemukan / toko tutup"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Simpan</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTerimaPengiriman" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="POST" action="{{ route('pengiriman.diterima') }}">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title text-success">Konfirmasi Pengiriman</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="pengiriman_id" id="terima_pengiriman_id">
+                    <p>Apakah Anda yakin pengiriman ini <strong>sudah diterima</strong>?</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success">Ya, Diterima</button>
                 </div>
 
             </form>

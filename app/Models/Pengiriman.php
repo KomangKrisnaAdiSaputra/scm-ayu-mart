@@ -21,4 +21,9 @@ class Pengiriman extends Model
     {
         return $this->belongsTo(PermintaanCabang::class, 'permintaan_id');
     }
+
+    public function status_kurir()
+    {
+        return $this->hasOne(StatusKurir::class, 'pengiriman_id');
+    }
 }
