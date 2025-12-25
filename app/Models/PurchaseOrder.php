@@ -29,4 +29,21 @@ class PurchaseOrder extends Model
     {
         return $this->hasMany(DetailPurchaseOrder::class, 'po_id');
     }
+
+    public function scopeByRole($q, $role)
+    {
+        if ($role === 'Gudang') {
+            $q->whereIn('status_po', ['Draft', 'Menunggu Persetujuan']);
+        } elseif ($role === 'Manajer') {
+            $q->where('status_po', 'Menunggu Persetujuan');
+        } elseif ($role === 'Supplier') {
+            $q->where('status_po', 'Disetujui Manajer')
+                ->where('supplier_id', auth()->user()->supplier_id);
+        } else {
+            $q->whereNotIn('status_po', [
+                'Draft',
+                'Menunggu Persetujuan'
+            ]);
+        }
+    }
 }

@@ -190,6 +190,16 @@
                             </a>
                         </li>
                     </ul>
+
+                    <ul class="sidebar-menu">
+                        {{-- <li class="menu-header">Dashboard</li> --}}
+                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Purchase Order' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('purchaseorder') }}">
+                                <i class="fas fa-fire"></i>
+                                <span>Purchase Order</span>
+                            </a>
+                        </li>
+                    </ul>
                 </aside>
             </div>
 

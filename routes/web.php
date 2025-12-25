@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\LoginController;
 // Gudang
 use App\Http\Controllers\Gudang\DashboardGudangController;
 use App\Http\Controllers\Gudang\StokController;
-use App\Http\Controllers\Gudang\PurchaseOrderController;
 
 // Supplier
 use App\Http\Controllers\Supplier\SupplierPOController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
 use App\Http\Controllers\PengirimanController;
+use App\Http\Controllers\PurchaseOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +64,16 @@ Route::middleware(['auth'])->group(function () {
         Route::post('ambil', 'ambil')->name('.ambil');
         Route::post('gagal', 'gagal')->name('.gagal');
         Route::post('diterima', 'diterima')->name('.diterima');
+        Route::get('/', 'index');
+    });
+
+    Route::prefix('purchase-order')->name('purchaseorder')->controller(PurchaseOrderController::class)->group(function () {
+        Route::get('/create',  'create')->name('.create');
+        Route::get('/{po}/edit',  'edit')->name('.edit');
+        Route::post('/store',  'store')->name('.store');
+        Route::put('/{po}/update',  'update')->name('.update');
+        Route::post('/{po}/update/status', 'updateStatus')->name('.update.status');
+
         Route::get('/', 'index');
     });
 });

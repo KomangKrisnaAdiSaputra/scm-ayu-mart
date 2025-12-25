@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Cabang;
+use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -52,6 +53,22 @@ class UserSeeder extends Seeder
             'nama' => 'Kurir Ayu Mart',
             'email' => 'kurir@ayu.com',
             'is_active' => 1
+        ]);
+
+        $userSupplier = User::create([
+            'username' => 'supplier',
+            'password' => Hash::make('123456'),
+            'role' => 'Supplier',
+            'nama' => 'Supplier Ayu Mart',
+            'email' => 'supplier@ayu.com',
+            'is_active' => 1
+        ]);
+        Supplier::create([
+            'users_id'       => $userSupplier->users_id,
+            'nama_supplier'  => 'Supplier Ayu Mart',
+            'alamat'         => 'Alamat Supplier',
+            'kontak'         => '089876543210',
+            'status_supplier' => 'aktif'
         ]);
     }
 }
