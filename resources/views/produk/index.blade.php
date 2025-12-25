@@ -56,6 +56,9 @@
                                 @else
                                     <th>Harga</th>
                                 @endif
+                                @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                                    <th>Stok</th>
+                                @endif
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -69,6 +72,28 @@
                                         <td>{{ $item->harga_beli }}</td>
                                     @endif
                                     <td>{{ $item->harga_jual }}</td>
+                                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                                        <td>
+                                            @php
+                                                $stokTotal = $item->stok->stok_total ?? 0;
+                                                $stokMinimum = $item->stok->stok_minimum ?? 0;
+                                            @endphp
+
+                                            @if ($stokTotal < $stokMinimum)
+                                                <div class="text-danger font-weight-bold">
+                                                    🔴 {{ $stokTotal }} / {{ $stokMinimum }}
+                                                </div>
+                                                <small class="text-danger">
+                                                    Stok menipis
+                                                </small>
+                                            @else
+                                                <div class="text-success font-weight-bold">
+                                                    🟢 {{ $stokTotal }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                    @endif
+
                                     <td>
                                         <div
                                             class="badge  {{ $item->status_produk == 'aktif' ? 'badge-success' : 'badge-danger' }}">

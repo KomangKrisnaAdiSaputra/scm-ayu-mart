@@ -16,7 +16,6 @@ class ProdukController extends Controller
             $query->where('kode_produk', 'like', "%{$search}%")
                 ->orWhere('nama_produk', 'like', "%{$search}%");
         })->get();
-
         return view('produk.index', compact('produk', 'search'));
     }
 

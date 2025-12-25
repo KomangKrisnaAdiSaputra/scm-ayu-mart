@@ -23,36 +23,45 @@
 
                         <div class="card-body">
 
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th width="40%">Produk</th>
-                                        <th width="20%">Qty</th>
-                                        <th width="10%">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="produk-wrapper">
-                                    <tr>
-                                        <td>
-                                            <select name="produk[0][produk_id]" class="form-control" required>
-                                                <option value="">-- Pilih Produk --</option>
-                                                @foreach ($produk as $item)
-                                                    <option value="{{ $item->produk_id }}">
-                                                        {{ $item->nama_produk }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="number" name="produk[0][qty]" class="form-control" min="1"
-                                                required>
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th style="min-width:200px">Produk</th>
+                                            <th class="text-center" style="min-width:90px">Qty</th>
+                                            <th class="text-center" style="min-width:60px">Aksi</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="produk-wrapper">
+                                        <tr>
+                                            <td>
+                                                <select name="produk[0][produk_id]" class="form-control"
+                                                    style="min-width:180px" required>
+                                                    <option value="">-- Pilih Produk --</option>
+                                                    @foreach ($produk as $item)
+                                                        <option value="{{ $item->produk_id }}">
+                                                            {{ $item->nama_produk }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+
+                                            <td>
+                                                <input type="number" name="produk[0][qty]" class="form-control text-center"
+                                                    min="1" inputmode="numeric" style="min-width:90px" required>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
 
                             <button type="button" class="btn btn-success btn-sm" id="add-row">
                                 + Tambah Produk

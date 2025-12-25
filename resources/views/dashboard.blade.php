@@ -70,4 +70,82 @@
             </div>
         </div>
     </div>
+
+    <div class="row">
+
+        {{-- STOK MENIPIS --}}
+        <div class="col-xl-4 col-lg-6 col-md-12 mb-4">
+            <div class="card border-danger shadow h-100">
+                <div class="card-header bg-danger text-white d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <h5 class="mb-0">Stok Produk Menipis</h5>
+                </div>
+
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th width="180">Kondisi Stok</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($produkMenipis as $item)
+                                @php
+                                    $total = $item->stok->stok_total;
+                                    $min = $item->stok->stok_minimum;
+                                    $persen = $min > 0 ? ($total / $min) * 100 : 0;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <strong>{{ $item->nama_produk }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ $item->kategori }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-danger mb-1">
+                                            🔴 {{ $total }} / {{ $min }}
+                                        </span>
+
+                                        <div class="progress" style="height:6px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ min(100, $persen) }}%">
+                                            </div>
+                                        </div>
+
+                                        <small class="text-danger font-weight-bold">
+                                            Stok menipis
+                                        </small>
+                                    </td>
+                                </tr>
+                            @endforeach
+
+                            @if ($produkMenipis->isEmpty())
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted py-4">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        Semua stok aman
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{-- <div class="col-xl-4 col-lg-6 col-md-12 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Permintaan Cabang</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-primary">12</h2>
+                    <small class="text-muted">Menunggu diproses</small>
+                </div>
+            </div>
+        </div> --}}
+
+    </div>
+
+
 @endsection

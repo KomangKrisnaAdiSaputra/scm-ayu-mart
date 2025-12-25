@@ -45,6 +45,11 @@
                 opacity: 1;
             }
         }
+
+        input[type="number"] {
+            min-width: 90px;
+            max-width: 100%;
+        }
     </style>
 
 
