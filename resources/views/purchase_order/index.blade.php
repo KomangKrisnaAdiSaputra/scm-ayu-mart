@@ -100,6 +100,21 @@
                                                 Detail
                                             </button>
 
+                                            @if (!$item->invoice && auth()->user()->role == 'Supplier' && $item->status_po == 'Diterima Supplier')
+                                                <form action="{{ url('/invoice/create/' . $item->po_id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button class="btn btn-sm btn-primary">Buat Invoice</button>
+                                                </form>
+                                            @elseif(auth()->user()->role == 'Manajer' && $item->invoice)
+                                                <button class="btn btn-success btn-sm btn-bayar-invoice"
+                                                    data-invoice='@json($item->invoice)'
+                                                    data-po='@json($item)' data-toggle="modal"
+                                                    data-target="#modalBayarInvoice">
+                                                    Bayar
+                                                </button>
+                                            @endif
+
                                         </td>
                                     </tr>
                                 @empty
@@ -242,6 +257,40 @@
                 `<span class="badge badge-success">${status}</span>` :
                 `<span class="badge badge-danger">${status}</span>`;
         }
+
+        document.querySelectorAll('.btn-bayar-invoice').forEach(btn => {
+            btn.addEventListener('click', function() {
+
+                const invoice = JSON.parse(this.dataset.invoice);
+
+                document.getElementById('invoice_id').value = invoice.invoice_id;
+                document.getElementById('nomor_invoice').innerText = invoice.nomor_invoice;
+                document.getElementById('total_invoice').innerText =
+                    new Intl.NumberFormat('id-ID').format(invoice.total_invoice);
+
+                const total = invoice.total_invoice;
+
+                // tampilkan format rupiah
+                document.getElementById('jumlah_bayar_view').value = new Intl.NumberFormat('id-ID').format(
+                    total);
+
+                // value numeric ke backend
+                document.getElementById('jumlah_bayar').value = total;
+
+                // Action form
+                document.getElementById('formBayarInvoice').action =
+                    `/invoice/payment/${invoice.invoice_id}`;
+
+                // Jika invoice ditolak
+                if (invoice.status_invoice === 'Ditolak') {
+                    document.getElementById('alasan_ditolak').innerText = invoice.alasan_ditolak;
+                    document.getElementById('alasan_ditolak_wrapper').classList.remove('d-none');
+                } else {
+                    document.getElementById('alasan_ditolak_wrapper').classList.add('d-none');
+                }
+
+            });
+        });
     </script>
 
 @endsection
@@ -323,6 +372,85 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalBayarInvoice" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+
+            <form id="formBayarInvoice" method="POST" enctype="multipart/form-data">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Pembayaran Invoice</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" name="invoice_id" id="invoice_id">
+
+                    <div class="mb-2">
+                        <strong>No Invoice:</strong>
+                        <span id="nomor_invoice">-</span>
+                    </div>
+
+                    <div class="mb-2">
+                        <strong>Total:</strong>
+                        Rp <span id="total_invoice">0</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tanggal Bayar</label>
+                        <input type="date" name="tanggal_bayar" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Jumlah Bayar</label>
+
+                        <!-- Tampilan (formatted) -->
+                        <input type="text" id="jumlah_bayar_view" class="form-control" readonly>
+
+                        <!-- Data ke backend -->
+                        <input type="hidden" name="jumlah_bayar" id="jumlah_bayar">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Metode Pembayaran</label>
+                        <select name="metode_bayar" class="form-control" required>
+                            <option value="">Pilih</option>
+                            <option>Transfer Bank</option>
+                            <option>Cash</option>
+                            <option>QRIS</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bukti Pembayaran</label>
+                        <input type="file" name="bukti_pembayaran" class="form-control-file">
+                    </div>
+
+                    <div id="alasan_ditolak_wrapper" class="d-none">
+                        <div class="alert alert-danger">
+                            <strong>Ditolak:</strong>
+                            <span id="alasan_ditolak"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        Simpan Pembayaran
+                    </button>
+                </div>
+
+            </form>
+
         </div>
     </div>
 </div>

@@ -20,6 +20,11 @@ class PurchaseOrder extends Model
 
     public $timestamps = false;
 
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class, 'po_id');
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');

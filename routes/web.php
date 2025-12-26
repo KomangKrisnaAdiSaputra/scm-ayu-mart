@@ -12,6 +12,7 @@ use App\Http\Controllers\Supplier\SupplierPOController;
 
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
 use App\Http\Controllers\PengirimanController;
@@ -75,6 +76,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{po}/update/status', 'updateStatus')->name('.update.status');
 
         Route::get('/', 'index');
+    });
+
+    Route::prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
+        Route::post('/create/{poId}', 'createFromPo')->name('.createfrompo');
+        Route::post('/payment/{invoiceId}', 'savePayment')->name('.createfrompo');
+        Route::post('/reject/{invoiceId}', 'reject')->name('.createfrompo');
     });
 });
 
