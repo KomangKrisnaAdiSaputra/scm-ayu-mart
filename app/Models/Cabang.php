@@ -16,8 +16,6 @@ class Cabang extends Model
         'kontak'
     ];
 
-    public $timestamps = false;
-
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');

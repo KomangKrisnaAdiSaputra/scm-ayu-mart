@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id('pengiriman_id');
             $table->unsignedBigInteger('permintaan_id');
             $table->dateTime('tanggal_kirim');
-            $table->enum('status_pengiriman',['Diproses','Dikirim','Diterima']);
+            $table->enum('status_pengiriman', ['Diproses', 'Dikirim', 'Diterima']);
 
             $table->foreign('permintaan_id')->references('permintaan_id')->on('permintaan_cabang');
+
+            $table->timestamps();
         });
     }
 

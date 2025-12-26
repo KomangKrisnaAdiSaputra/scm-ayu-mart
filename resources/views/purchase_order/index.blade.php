@@ -71,7 +71,9 @@
                                                     ? 'secondary'
                                                     : ($item->status_po == 'Menunggu Persetujuan'
                                                         ? 'warning'
-                                                        : ($item->status_po == 'Disetujui Manajer'
+                                                        : ($item->status_po == 'Disetujui Manajer' ||
+                                                        $item->status_po == 'Diterima Supplier' ||
+                                                        $item->status_po == 'Selesai'
                                                             ? 'success'
                                                             : 'danger')) }}">
                                                 {{ $item->status_po }}
@@ -136,6 +138,7 @@
             Gudang: {
                 'Draft': ['Draft', 'Menunggu Persetujuan'],
                 'Dikirim Supplier': ['Selesai'],
+                'Menunggu Persetujuan': ['Draft', 'Menunggu Persetujuan'],
             },
             Manajer: {
                 'Menunggu Persetujuan': ['Disetujui Manajer', 'Ditolak Manajer'],
@@ -189,6 +192,7 @@
 
             // status dropdown
             const allowed = rules[role]?.[po.status_po] ?? [];
+            // let options = `<option value="" readonly>Select</option>`;
             let options = '';
 
             allowed.forEach(status => {

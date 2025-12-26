@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('produk', function (Blueprint $table) {
             $table->id('produk_id');
-            $table->string('kode_produk',50);
-            $table->string('nama_produk',50);
-            $table->string('kategori',30);
-            $table->string('satuan',20);
+            $table->string('kode_produk', 50);
+            $table->string('nama_produk', 50);
+            $table->string('kategori', 30);
+            $table->string('satuan', 20);
             $table->integer('harga_beli');
             $table->integer('harga_jual');
-            $table->enum('status_produk',['aktif','nonaktif']);
+            $table->enum('status_produk', ['aktif', 'nonaktif']);
+
+            $table->timestamps();
         });
     }
 

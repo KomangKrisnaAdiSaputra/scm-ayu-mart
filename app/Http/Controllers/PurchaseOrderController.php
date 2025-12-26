@@ -23,6 +23,7 @@ class PurchaseOrderController extends Controller
                     ->orWhere('status_pembayaran', 'like', "%$search%")
                     ->orWhereDate('tanggal_po', $search);
             })
+            ->orderBy('updated_at', 'desc')
             ->orderBy('tanggal_po', 'desc')
             ->get();
 
@@ -92,7 +93,7 @@ class PurchaseOrderController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('purchaseorder.index')
+            return redirect()->route('purchaseorder')
                 ->with('success', 'Purchase Order berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -138,7 +139,7 @@ class PurchaseOrderController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('purchaseorder.index')
+            return redirect()->route('purchaseorder')
                 ->with('success', 'Purchase Order berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -160,6 +161,7 @@ class PurchaseOrderController extends Controller
             'Gudang' => [
                 'Draft' => ['Draft', 'Menunggu Persetujuan'],
                 'Dikirim Supplier' => ['Selesai'],
+                'Menunggu Persetujuan' => ['Draft', 'Menunggu Persetujuan'],
             ],
             'Manajer' => [
                 'Menunggu Persetujuan' => ['Disetujui Manajer', 'Ditolak Manajer'],

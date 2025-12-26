@@ -16,11 +16,13 @@ return new class extends Migration
             $table->unsignedBigInteger('po_id');
             $table->unsignedBigInteger('produk_id');
             $table->integer('qty_retur');
-            $table->string('alasan',150);
+            $table->string('alasan', 150);
             $table->dateTime('tanggal_retur');
 
             $table->foreign('po_id')->references('po_id')->on('purchase_order');
             $table->foreign('produk_id')->references('produk_id')->on('produk');
+
+            $table->timestamps();
         });
     }
 

@@ -16,8 +16,6 @@ class PenerimaanProduk extends Model
         'status_penerimaan'
     ];
 
-    public $timestamps = false;
-
     public function po()
     {
         return $this->belongsTo(PurchaseOrder::class, 'po_id');

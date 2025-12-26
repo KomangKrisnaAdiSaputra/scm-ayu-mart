@@ -15,8 +15,6 @@ class PermintaanCabang extends Model
         'status_permintaan'
     ];
 
-    public $timestamps = false;
-
     public function detail()
     {
         return $this->hasMany(DetailPermintaanCabang::class, 'permintaan_id');

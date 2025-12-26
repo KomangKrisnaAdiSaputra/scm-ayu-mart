@@ -17,8 +17,6 @@ class StatusKurir extends Model
         'nama_kurir'
     ];
 
-    public $timestamps = false;
-
     public function pengiriman()
     {
         return $this->belongsTo(Pengiriman::class, 'pengiriman_id');

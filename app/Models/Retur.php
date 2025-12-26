@@ -16,6 +16,4 @@ class Retur extends Model
         'alasan',
         'tanggal_retur'
     ];
-
-    public $timestamps = false;
 }

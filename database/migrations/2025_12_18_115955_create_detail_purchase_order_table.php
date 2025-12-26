@@ -20,6 +20,8 @@ return new class extends Migration
 
             $table->foreign('po_id')->references('po_id')->on('purchase_order');
             $table->foreign('produk_id')->references('produk_id')->on('produk');
+
+            $table->timestamps();
         });
     }
 

@@ -15,8 +15,6 @@ class Pengiriman extends Model
         'status_pengiriman'
     ];
 
-    public $timestamps = false;
-
     public function permintaan()
     {
         return $this->belongsTo(PermintaanCabang::class, 'permintaan_id');

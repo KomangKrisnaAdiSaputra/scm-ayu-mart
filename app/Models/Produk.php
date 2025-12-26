@@ -19,8 +19,6 @@ class Produk extends Model
         'status_produk'
     ];
 
-    public $timestamps = false;
-
     public function stok()
     {
         return $this->hasOne(StokGudang::class, 'produk_id');

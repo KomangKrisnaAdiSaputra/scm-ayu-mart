@@ -16,9 +16,11 @@ return new class extends Migration
             $table->unsignedBigInteger('po_id');
             $table->dateTime('tanggal_terima');
             $table->integer('total_diterima');
-            $table->enum('status_penerimaan',['Lengkap','Kurang','Retur']);
+            $table->enum('status_penerimaan', ['Lengkap', 'Kurang', 'Retur']);
 
             $table->foreign('po_id')->references('po_id')->on('purchase_order');
+
+            $table->timestamps();
         });
     }
 

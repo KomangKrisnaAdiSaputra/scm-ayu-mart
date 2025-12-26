@@ -33,12 +33,31 @@ class PurchaseOrder extends Model
     public function scopeByRole($q, $role)
     {
         if ($role === 'Gudang') {
-            $q->whereIn('status_po', ['Draft', 'Menunggu Persetujuan']);
-        } elseif ($role === 'Manajer') {
-            $q->where('status_po', 'Menunggu Persetujuan');
+            $q->whereIn('status_po', [
+                'Draft',
+                'Menunggu Persetujuan',
+                'Disetujui Manajer',
+                'Ditolak Manajer',
+                'Diterima Supplier',
+                'Ditolak Supplier',
+                'Dikirim Supplier'
+            ]);
+        } else if ($role === 'Manajer') {
+            $q->whereIn('status_po', [
+                'Menunggu Persetujuan',
+                'Disetujui Manajer',
+                'Ditolak Manajer',
+                'Diterima Supplier',
+                'Ditolak Supplier',
+                'Dikirim Supplier'
+            ]);
         } elseif ($role === 'Supplier') {
-            $q->where('status_po', 'Disetujui Manajer')
-                ->where('supplier_id', auth()->user()->supplier_id);
+            $q->whereIn('status_po', [
+                'Disetujui Manajer',
+                'Diterima Supplier',
+                'Ditolak Supplier',
+                'Dikirim Supplier'
+            ])->where('supplier_id', auth()->user()->supplier->supplier_id);
         } else {
             $q->whereNotIn('status_po', [
                 'Draft',

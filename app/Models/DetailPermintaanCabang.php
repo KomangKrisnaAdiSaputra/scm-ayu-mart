@@ -19,8 +19,6 @@ class DetailPermintaanCabang extends Model
         'qty_permintaan',
     ];
 
-    public $timestamps = true;
-
     // Relasi ke permintaan
     public function permintaan()
     {

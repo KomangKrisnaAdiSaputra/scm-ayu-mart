@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('status_kurir', function (Blueprint $table) {
             $table->id('status_id');
             $table->unsignedBigInteger('pengiriman_id');
-            $table->enum('status_kurir',['Dalam Pengiriman','Terkirim','Gagal']);
+            $table->enum('status_kurir', ['Dalam Pengiriman', 'Terkirim', 'Gagal']);
             $table->dateTime('waktu_update');
-            $table->string('catatan',150)->nullable();
-            $table->string('nama_kurir',50);
+            $table->string('catatan', 150)->nullable();
+            $table->string('nama_kurir', 50);
 
             $table->foreign('pengiriman_id')->references('pengiriman_id')->on('pengiriman');
+
+            $table->timestamps();
         });
     }
 

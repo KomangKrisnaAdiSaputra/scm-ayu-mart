@@ -17,8 +17,6 @@ class Supplier extends Model
         'status_supplier'
     ];
 
-    public $timestamps = false;
-
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');

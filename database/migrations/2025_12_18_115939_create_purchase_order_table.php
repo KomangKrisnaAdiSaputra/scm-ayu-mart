@@ -30,6 +30,8 @@ return new class extends Migration
             $table->dateTime('tanggal_pembayaran')->nullable();
 
             $table->foreign('supplier_id')->references('supplier_id')->on('supplier');
+
+            $table->timestamps();
         });
     }
 

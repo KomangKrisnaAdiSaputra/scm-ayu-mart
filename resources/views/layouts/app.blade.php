@@ -181,15 +181,17 @@
                         </ul>
                     @endif
 
-                    <ul class="sidebar-menu">
-                        {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : '' }}">
-                            <a class="nav-link" href="{{ route('pengiriman') }}">
-                                <i class="fas fa-fire"></i>
-                                <span>Pengiriman</span>
-                            </a>
-                        </li>
-                    </ul>
+                    @if (in_array(auth()->user()->role, ['Gudang', 'Cabang', 'Kurir']))
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('pengiriman') }}">
+                                    <i class="fas fa-fire"></i>
+                                    <span>Pengiriman</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
 
                     <ul class="sidebar-menu">
                         {{-- <li class="menu-header">Dashboard</li> --}}

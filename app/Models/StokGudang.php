@@ -15,8 +15,6 @@ class StokGudang extends Model
         'stok_minimum'
     ];
 
-    public $timestamps = true;
-
     public function produk()
     {
         return $this->belongsTo(Produk::class, 'produk_id');

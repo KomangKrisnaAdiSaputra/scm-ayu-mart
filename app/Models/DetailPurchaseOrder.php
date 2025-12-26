@@ -16,8 +16,6 @@ class DetailPurchaseOrder extends Model
         'harga'
     ];
 
-    public $timestamps = false;
-
     public function produk()
     {
         return $this->belongsTo(Produk::class, 'produk_id');
