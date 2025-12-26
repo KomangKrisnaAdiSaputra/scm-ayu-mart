@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Produk;
+use App\Models\StokGudang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProdukController extends Controller
 {
@@ -35,28 +37,44 @@ class ProdukController extends Controller
             'harga_beli'    => 'required|numeric|min:0',
             'harga_jual'    => 'required|numeric|min:0',
             'status_produk' => 'required|in:aktif,nonaktif',
+            'stok_minimum'  => 'required|integer|min:0',
         ];
 
-        // ✅ UNIQUE kode_produk (exclude produk_id saat edit)
+        if (!$id) {
+            $rules['stok_total'] = 'required|integer|min:0';
+        }
+
         $rules['kode_produk'] .= $id
             ? "|unique:produk,kode_produk,{$id},produk_id"
             : "|unique:produk,kode_produk";
 
         $validated = $request->validate($rules);
 
-        // ✅ UPDATE or CREATE berdasarkan produk_id
-        Produk::updateOrCreate(
-            ['produk_id' => $id],
-            $validated
-        );
+        DB::transaction(function () use ($validated, $id) {
 
-        return redirect()->route('produk')
-            ->with(
-                'success',
-                $id
-                    ? 'Produk berhasil diperbarui'
-                    : 'Produk berhasil ditambahkan'
+            $produk = Produk::updateOrCreate(
+                ['produk_id' => $id],
+                collect($validated)->except(['stok_total', 'stok_minimum'])->toArray()
             );
+
+            if (!$id) {
+                StokGudang::create([
+                    'produk_id'    => $produk->produk_id,
+                    'stok_total'   => $validated['stok_total'],
+                    'stok_minimum' => $validated['stok_minimum'],
+                ]);
+            } else {
+                StokGudang::where('produk_id', $produk->produk_id)
+                    ->update([
+                        'stok_minimum' => $validated['stok_minimum']
+                    ]);
+            }
+        });
+
+        return redirect()->route('produk')->with(
+            'success',
+            $id ? 'Produk berhasil diperbarui' : 'Produk berhasil ditambahkan'
+        );
     }
 
     public function delete($id)

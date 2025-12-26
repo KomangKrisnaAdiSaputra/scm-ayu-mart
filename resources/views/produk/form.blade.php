@@ -122,6 +122,44 @@
                             </div>
                         </div>
 
+                        {{-- ================== STOK GUDANG ================== --}}
+                        <div class="card-body border-top mt-3">
+                            <h5 class="mb-3">Stok Gudang</h5>
+
+                            <div class="row">
+                                {{-- STOK TOTAL (HANYA SAAT CREATE) --}}
+                                @if (!isset($produk->produk_id))
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Stok Awal</label>
+                                            <input type="number" name="stok_total"
+                                                class="form-control @error('stok_total') is-invalid @enderror"
+                                                value="{{ old('stok_total', null) }}" min="0" placeholder="0">
+                                            @error('stok_total')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- STOK MINIMUM (CREATE & UPDATE) --}}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Stok Minimum</label>
+                                        <input type="number" name="stok_minimum"
+                                            class="form-control @error('stok_minimum') is-invalid @enderror"
+                                            value="{{ old('stok_minimum', $produk->stok->stok_minimum ?? null) }}"
+                                            placeholder="0" min="0">
+                                        @error('stok_minimum')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- ================== END STOK ================== --}}
+
+
                         {{-- FOOTER --}}
                         <div class="card-footer text-right">
                             <a href="{{ route('produk') }}" class="btn btn-secondary mr-2">Batal</a>

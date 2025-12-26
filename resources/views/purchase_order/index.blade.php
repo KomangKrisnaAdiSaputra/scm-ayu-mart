@@ -211,6 +211,9 @@
                 $('#formUpdateStatus').hide();
             }
 
+            if (po.status_po == 'Diterima Supplier' && po.status_pembayaran == 'Belum Bayar') {
+                $('#formUpdateStatus').hide();
+            }
             $('#modalDetailPO').modal('show');
         });
 
