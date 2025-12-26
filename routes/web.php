@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::middleware(['role:Manajer|Gudang|Cabang'])->prefix('permintaan-cabang')->name('permintaancabang')->controller(PermintaanCabangController::class)->group(function () {
+    Route::middleware(['role:Gudang|Cabang'])->prefix('permintaan-cabang')->name('permintaancabang')->controller(PermintaanCabangController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/store', 'store')->name('.store');
         Route::post('{id}/status', 'updateStatus')->name('.updatestatus');

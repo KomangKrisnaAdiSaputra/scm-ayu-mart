@@ -4,7 +4,7 @@
     <div class="row">
         <div class="col-12 col-md-12 col-lg-12">
 
-            @if (auth()->user()->role == 'Gudang')
+            @if (in_array(auth()->user()->role, ['Gudang', 'Manajer']))
                 <div class="d-flex justify-content-end mb-3">
                     <a href="{{ route('purchaseorder.create') }}"" class="btn btn-primary">Form Purchase</a>
                 </div>
@@ -66,16 +66,21 @@
 
                                         {{-- STATUS PO --}}
                                         <td>
+                                            @php
+                                                $statusClasses = [
+                                                    'Draft' => 'secondary',
+                                                    'Menunggu Persetujuan' => 'warning',
+                                                    'Disetujui Manajer' => 'success',
+                                                    'Ditolak Manajer' => 'danger',
+                                                    'Diterima Supplier' => 'success',
+                                                    'Ditolak Supplier' => 'danger',
+                                                    'Dikirim Supplier' => 'info',
+                                                    'Selesai' => 'primary',
+                                                ];
+                                            @endphp
+
                                             <span
-                                                class="badge badge-{{ $item->status_po == 'Draft'
-                                                    ? 'secondary'
-                                                    : ($item->status_po == 'Menunggu Persetujuan'
-                                                        ? 'warning'
-                                                        : ($item->status_po == 'Disetujui Manajer' ||
-                                                        $item->status_po == 'Diterima Supplier' ||
-                                                        $item->status_po == 'Selesai'
-                                                            ? 'success'
-                                                            : 'danger')) }}">
+                                                class="badge badge-{{ $statusClasses[$item->status_po] ?? 'secondary' }}">
                                                 {{ $item->status_po }}
                                             </span>
                                         </td>

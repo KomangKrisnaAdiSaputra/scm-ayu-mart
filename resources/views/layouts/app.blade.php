@@ -168,7 +168,7 @@
                         </ul>
                     @endif
 
-                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Cabang']))
+                    @if (in_array(auth()->user()->role, ['Gudang', 'Cabang']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li

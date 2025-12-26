@@ -21,9 +21,11 @@
     <p class="section-lead">Example of some Bootstrap table components.</p> --}}
     <div class="row">
         <div class="col-12 col-md-12 col-lg-12">
-            <div class="d-flex justify-content-end mb-3">
-                <a href="{{ route('produk.form') }}"" class="btn btn-primary">Tambah Data</a>
-            </div>
+            @if (auth()->user()->role == 'Manajer')
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="{{ route('produk.form') }}"" class="btn btn-primary">Tambah Data</a>
+                </div>
+            @endif
 
             <div class="card">
                 <div class="card-header">

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('titlePage', 'Permintaan Cabang')
+@section('titlePage', 'Purchase Order')
 
 @php
     $breadcrumbs = [

@@ -79,7 +79,7 @@ class PurchaseOrderController extends Controller
                 'supplier_id' => $request->supplier_id,
                 'tanggal_po' => now(),
                 'total_po' => $total,
-                'status_po' => 'Draft',
+                'status_po' => auth()->user()->role == 'Manajer' ? 'Disetujui Manajer' : 'Draft',
                 'status_pembayaran' => 'Belum Bayar',
             ]);
 
