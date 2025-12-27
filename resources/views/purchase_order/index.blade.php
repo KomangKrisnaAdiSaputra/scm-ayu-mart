@@ -1,5 +1,15 @@
 @extends('layouts.app')
 @section('titlePage', 'Purchase Order')
+
+@section('css')
+    <style>
+        .modal-dialog-scrollable .modal-body {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+    </style>
+@endsection
+
 @section('app')
     <div class="row">
         <div class="col-12 col-md-12 col-lg-12">
