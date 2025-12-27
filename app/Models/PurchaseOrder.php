@@ -45,7 +45,8 @@ class PurchaseOrder extends Model
                 'Ditolak Manajer',
                 'Diterima Supplier',
                 'Ditolak Supplier',
-                'Dikirim Supplier'
+                'Dikirim Supplier',
+                'Selesai'
             ]);
         } else if ($role === 'Manajer') {
             $q->whereIn('status_po', [
@@ -54,14 +55,16 @@ class PurchaseOrder extends Model
                 'Ditolak Manajer',
                 'Diterima Supplier',
                 'Ditolak Supplier',
-                'Dikirim Supplier'
+                'Dikirim Supplier',
+                'Selesai'
             ]);
         } elseif ($role === 'Supplier') {
             $q->whereIn('status_po', [
                 'Disetujui Manajer',
                 'Diterima Supplier',
                 'Ditolak Supplier',
-                'Dikirim Supplier'
+                'Dikirim Supplier',
+                'Selesai'
             ])->where('supplier_id', auth()->user()->supplier->supplier_id);
         } else {
             $q->whereNotIn('status_po', [

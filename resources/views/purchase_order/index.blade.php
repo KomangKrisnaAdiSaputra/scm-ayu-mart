@@ -30,7 +30,8 @@
                                 <input type="text" name="search" class="form-control"
                                     placeholder="Cari ID / Status / Tanggal" value="{{ $search ?? '' }}">
                                 <div class="input-group-append">
-                                    <button class="btn btn-primary">
+                                    <button class="btn btn-primary"
+                                        style="border-radius: 0 30px 30px 0 !important;margin-top: -0;">
                                         <i class="fas fa-search"></i>
                                     </button>
                                 </div>
@@ -111,11 +112,10 @@
                                             </button>
 
                                             @if (!$item->invoice && auth()->user()->role == 'Supplier' && $item->status_po == 'Diterima Supplier')
-                                                <form action="{{ url('/invoice/create/' . $item->po_id) }}" method="POST"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button class="btn btn-sm btn-primary">Buat Invoice</button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-primary btn-buat-invoice"
+                                                    data-po-id="{{ $item->po_id }}">
+                                                    Buat Invoice
+                                                </button>
                                             @elseif(in_array(auth()->user()->role, ['Manajer', 'Supplier']) && $item->invoice)
                                                 <button type="button" class="btn btn-success btn-sm btn-bayar-invoice"
                                                     data-role='@json(auth()->user()->role)'
@@ -419,6 +419,23 @@
             });
 
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.btn-buat-invoice');
+            const form = document.getElementById('formBuatInvoice');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const poId = this.dataset.poId;
+
+                    // Set action form sesuai PO yang dipilih
+                    form.action = `/invoice/create/${poId}`;
+
+                    // Tampilkan modal
+                    $('#modalBuatInvoice').modal('show');
+                });
+            });
+        });
     </script>
 
 @endsection
@@ -602,6 +619,42 @@
                         Simpan Pembayaran
                     </button>
                 </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBuatInvoice" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+
+            <form id="formBuatInvoice" method="POST">
+                @csrf
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Buat Invoice</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Catatan Supplier <small class="text-muted">(optional)</small></label>
+                        <textarea name="catatan_supplier" class="form-control" rows="3" placeholder="Tambahkan catatan jika ada..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Buat Invoice
+                    </button>
+                </div>
+
             </form>
 
         </div>

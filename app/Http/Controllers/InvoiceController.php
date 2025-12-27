@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class InvoiceController extends Controller
 {
     // Buat invoice dari PO
-    public function createFromPo($poId)
+    public function createFromPo(Request $request, $poId)
     {
         $po = PurchaseOrder::with(['invoice', 'invoice.payment'])->findOrFail($poId);
 
@@ -20,14 +20,15 @@ class InvoiceController extends Controller
             return back()->with('error', 'Invoice untuk PO ini sudah dibuat');
         }
 
-        DB::transaction(function () use ($po) {
+        DB::transaction(function () use ($po, $request) {
 
             Invoice::create([
                 'po_id'          => $po->po_id,
                 'nomor_invoice'  => 'INV-' . $po->po_id . '-' . date('YmdHis'),
                 'tanggal_invoice' => now(),
                 'total_invoice'  => $po->total_po,
-                'status_invoice' => 'Menunggu Pembayaran'
+                'status_invoice' => 'Menunggu Pembayaran',
+                'catatan_supplier' => $request->catatan_supplier,
             ]);
 
             // Update status pembayaran PO

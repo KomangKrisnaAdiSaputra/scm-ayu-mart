@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DetailPurchaseOrder;
 use App\Models\Produk;
 use App\Models\PurchaseOrder;
+use App\Models\StokGudang;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -186,6 +187,13 @@ class PurchaseOrderController extends Controller
         $po->update([
             'status_po' => $newStatus
         ]);
+
+        if ($newStatus == "Selesai") {
+            foreach ($po->detail as $item) {
+                StokGudang::where('produk_id', $item->produk_id)
+                    ->increment('stok_total', $item->qty);
+            }
+        }
 
         return redirect()->back()->with([
             'success' => 'Status berhasil diperbarui menjadi ' . $newStatus

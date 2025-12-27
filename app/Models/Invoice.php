@@ -17,7 +17,7 @@ class Invoice extends Model
         'tanggal_invoice',
         'total_invoice',
         'status_invoice',
-        'alasan_ditolak',
+        'catatan_supplier',
     ];
 
     protected $casts = [
