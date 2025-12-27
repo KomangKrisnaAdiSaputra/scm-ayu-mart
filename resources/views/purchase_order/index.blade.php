@@ -122,7 +122,7 @@
                                                     data-invoice='@json($item->invoice)'
                                                     data-po='@json($item)'
                                                     data-invoice-payment='@json($item->invoice->payment)'>
-                                                    Bayar
+                                                    Invoice
                                                 </button>
                                             @endif
 
@@ -282,15 +282,12 @@
             const btnBayar = document.getElementById('btnSimpanPembayaran');
             const buktiWrapper = document.getElementById('bukti_preview_wrapper');
 
+            const formInputs = formBayar.querySelectorAll('input,select,textarea');
+
             /* ================= TOGGLE ================= */
             toggleTolak.addEventListener('change', function() {
-                if (this.checked) {
-                    catatanSupplier.removeAttribute('readonly');
-                    btnTolakInvoice.classList.remove('d-none');
-                } else {
-                    catatanSupplier.setAttribute('readonly', true);
-                    btnTolakInvoice.classList.add('d-none');
-                }
+                catatanSupplier.readOnly = !this.checked;
+                btnTolakInvoice.classList.toggle('d-none', !this.checked);
             });
 
             /* ================= OPEN MODAL ================= */
@@ -308,30 +305,33 @@
                     formBayar.reset();
                     toggleTolak.checked = false;
                     toggleTolak.disabled = false;
+
                     wrapperTolak.classList.add('d-none');
                     btnBayar.classList.add('d-none');
                     buktiWrapper.classList.add('d-none');
+
                     catatanSupplier.readOnly = true;
 
-                    formBayar.querySelectorAll('input,select,textarea').forEach(el => {
-                        el.disabled = false;
-                    });
+                    formInputs.forEach(el => el.disabled = false);
 
                     /* DATA */
                     document.getElementById('invoice_id').value = invoice.invoice_id;
                     document.getElementById('nomor_invoice').innerText = invoice.nomor_invoice;
                     document.getElementById('tanggal_invoice').innerText = invoice.tanggal_invoice;
-                    document.getElementById('total_invoice').innerText = invoice.total_invoice;
+                    document.getElementById('total_invoice').innerText = formatRupiah(invoice
+                        .total_invoice);
+
                     catatanSupplier.value = invoice.catatan_supplier ?? '';
-                    document.getElementById('jumlah_bayar_view').value = invoice
-                        .total_invoice
+
+                    document.getElementById('jumlah_bayar_view').value = formatRupiah(invoice
+                        .total_invoice);
                     document.getElementById('jumlah_bayar').value = parseInt(invoice.total_invoice);
 
                     const statusEl = document.getElementById('status_invoice');
                     statusEl.className = 'badge';
                     statusEl.innerText = invoice.status_invoice;
 
-                    /* MENUNGGU */
+                    /* MENUNGGU PEMBAYARAN */
                     if (invoice.status_invoice === 'Menunggu Pembayaran') {
                         statusEl.classList.add('badge-warning');
 
@@ -339,34 +339,36 @@
                             btnBayar.classList.remove('d-none');
                             formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
                         } else {
-                            formBayar.querySelectorAll('input,select,textarea').forEach(el => {
-                                el.disabled = true;
-                            });
+                            formInputs.forEach(el => el.disabled = true);
                         }
                     }
 
-                    /* LUNAS */
+                    /* PAYMENT EXIST */
                     if (payment) {
+
                         if (invoice.status_invoice === 'Lunas') {
                             statusEl.classList.add('badge-success');
-                            formBayar.querySelectorAll('input,select,textarea').forEach(el => {
-                                if (el.id !== 'catatan_supplier') {
-                                    el.disabled = true;
-                                }
+                            formInputs.forEach(el => {
+                                if (el.id !== 'catatan_supplier') el.disabled = true;
                             });
+
                         } else if (invoice.status_invoice === 'Ditolak') {
-                            if (role === 'Manajer') {
-                                formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
-                                btnBayar.classList.remove('d-none');
-                            }
                             statusEl.classList.add('badge-danger');
+
+                            if (role === 'Manajer') {
+                                btnBayar.classList.remove('d-none');
+                                formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
+                            }
                         }
 
-                        formBayar.querySelector('[name="tanggal_bayar"]').value = payment
-                            .tanggal_bayar.split('T')[0];
-                        formBayar.querySelector('[name="metode_bayar"]').value = payment
-                            .metode_bayar;
-                        document.getElementById('jumlah_bayar_view').value = payment.jumlah_bayar;
+                        formBayar.querySelector('[name="tanggal_bayar"]').value =
+                            payment.tanggal_bayar.split('T')[0];
+
+                        formBayar.querySelector('[name="metode_bayar"]').value =
+                            payment.metode_bayar;
+
+                        document.getElementById('jumlah_bayar_view').value = formatRupiah(payment
+                            .jumlah_bayar);
                         document.getElementById('catatan_manajer').value = payment
                             .catatan_manajer ?? '';
 
@@ -376,18 +378,20 @@
                             buktiWrapper.classList.remove('d-none');
                         }
 
+                        /* SUPPLIER */
                         if (role === 'Supplier') {
-                            formBayar.querySelectorAll('input,select,textarea').forEach(el => {
-                                if (el.id !== 'catatan_supplier') {
-                                    el.disabled = true;
-                                }
+                            formInputs.forEach(el => {
+                                if (el.id !== 'catatan_supplier') el.disabled = true;
                             });
 
-                            if (invoice.status_invoice === 'Lunas' && po.status_po !=
-                                "Dikirim Supplier") {
+                            if (
+                                invoice.status_invoice === 'Lunas' &&
+                                po.status_po !== 'Dikirim Supplier'
+                            ) {
                                 wrapperTolak.classList.remove('d-none');
                             }
-                            toggleTolak.disabled = false; // 🔥 FIX UTAMA
+
+                            toggleTolak.disabled = false;
                         }
                     }
 
@@ -410,7 +414,6 @@
                 document.getElementById('invoice_id_tolak').value = invoiceId;
                 document.getElementById('catatan_supplier_hidden').value = catatanSupplier.value;
 
-                // ✅ PENULISAN ACTION YANG BENAR
                 formTolak.action = `/invoice/reject/${invoiceId}`;
                 formTolak.submit();
             });
