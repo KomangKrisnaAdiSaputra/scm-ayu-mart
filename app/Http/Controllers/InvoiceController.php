@@ -49,6 +49,7 @@ class InvoiceController extends Controller
             return back()->with('error', 'Invoice sudah lunas');
         }
 
+
         $request->validate([
             'jumlah_bayar'      => 'required|numeric|min:1',
             'tanggal_bayar'     => 'required|date|before_or_equal:today',
