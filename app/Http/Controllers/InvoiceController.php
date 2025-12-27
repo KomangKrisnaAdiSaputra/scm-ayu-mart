@@ -103,17 +103,16 @@ class InvoiceController extends Controller
     }
 
 
-
     // Tolak invoice
     public function reject(Request $request, $invoiceId)
     {
         $request->validate([
-            'alasan_ditolak' => 'required'
+            'catatan_supplier' => 'required'
         ]);
 
         Invoice::where('invoice_id', $invoiceId)->update([
             'status_invoice' => 'Ditolak',
-            'alasan_ditolak' => $request->alasan_ditolak
+            'catatan_supplier' => $request->catatan_supplier
         ]);
 
         return back()->with('success', 'Invoice ditolak');

@@ -50,6 +50,10 @@
             min-width: 90px;
             max-width: 100%;
         }
+
+        textarea {
+            height: 50px !important;
+        }
     </style>
 
 

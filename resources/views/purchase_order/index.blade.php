@@ -116,12 +116,11 @@
                                                     @csrf
                                                     <button class="btn btn-sm btn-primary">Buat Invoice</button>
                                                 </form>
-                                            @elseif(auth()->user()->role == 'Manajer' && $item->invoice)
-                                                <button class="btn btn-success btn-sm btn-bayar-invoice"
+                                            @elseif(in_array(auth()->user()->role, ['Manajer', 'Supplier']) && $item->invoice)
+                                                <button type="button" class="btn btn-success btn-sm btn-bayar-invoice"
+                                                    data-role='@json(auth()->user()->role)'
                                                     data-invoice='@json($item->invoice)'
-                                                    data-invoice-payment='@json($item->invoice->payment)'
-                                                    data-po='@json($item)' data-toggle="modal"
-                                                    data-target="#modalBayarInvoice">
+                                                    data-invoice-payment='@json($item->invoice->payment)'>
                                                     Bayar
                                                 </button>
                                             @endif
@@ -269,87 +268,142 @@
                 `<span class="badge badge-danger">${status}</span>`;
         }
 
-        document.querySelectorAll('.btn-bayar-invoice').forEach(btn => {
-            btn.addEventListener('click', function() {
+        document.addEventListener('DOMContentLoaded', function() {
 
-                const invoice = JSON.parse(this.dataset.invoice);
-                const payment = this.dataset.invoicePayment ?
-                    JSON.parse(this.dataset.invoicePayment) :
-                    null;
+            const formBayar = document.getElementById('formBayarInvoice');
+            const formTolak = document.getElementById('formTolakInvoice');
 
-                const form = document.getElementById('formBayarInvoice');
+            const toggleTolak = document.getElementById('toggleTolakInvoice');
+            const btnTolakInvoice = document.getElementById('btnTolakInvoice');
+            const wrapperTolak = document.getElementById('wrapperTolakInvoice');
+            const catatanSupplier = document.getElementById('catatan_supplier');
 
-                // ================= RESET =================
-                form.reset();
-                form.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
-                document.getElementById('btnSimpanPembayaran').classList.remove('d-none');
-                document.getElementById('bukti_preview_wrapper').classList.add('d-none');
-                document.getElementById('catatan_manajer').value = '-';
+            const btnBayar = document.getElementById('btnSimpanPembayaran');
+            const buktiWrapper = document.getElementById('bukti_preview_wrapper');
 
-                // ================= INFORMASI INVOICE =================
-                document.getElementById('invoice_id').value = invoice.invoice_id;
-                document.getElementById('nomor_invoice').innerText = invoice.nomor_invoice;
-                document.getElementById('tanggal_invoice').innerText =
-                    formatTanggal(invoice.tanggal_invoice);
-                document.getElementById('total_invoice').innerText =
-                    formatRupiah(invoice.total_invoice);
-                document.getElementById('catatan_supplier').innerText =
-                    invoice.catatan_supplier ?? '-';
-
-                // ================= STATUS =================
-                const statusEl = document.getElementById('status_invoice');
-                statusEl.className = 'badge';
-                statusEl.innerText = invoice.status_invoice;
-
-                if (invoice.status_invoice === 'Lunas') {
-                    statusEl.classList.add('badge-success');
+            /* ================= TOGGLE ================= */
+            toggleTolakInvoice.addEventListener('change', function() {
+                if (this.checked) {
+                    catatanSupplier.removeAttribute('readonly');
+                    btnTolakInvoice.classList.remove('d-none');
                 } else {
-                    statusEl.classList.add('badge-warning');
+                    catatanSupplier.setAttribute('readonly', true);
+                    btnTolakInvoice.classList.add('d-none');
                 }
+            });
 
-                // ================= DEFAULT JUMLAH =================
-                document.getElementById('jumlah_bayar_view').value =
-                    formatRupiah(invoice.total_invoice);
-                document.getElementById('jumlah_bayar').value =
-                    parseInt(invoice.total_invoice);
+            /* ================= OPEN MODAL ================= */
+            document.querySelectorAll('.btn-bayar-invoice').forEach(btn => {
+                btn.addEventListener('click', function() {
 
-                // ================= JIKA SUDAH LUNAS =================
-                if (invoice.status_invoice === 'Lunas' && payment) {
+                    const invoice = JSON.parse(this.dataset.invoice);
+                    const payment = this.dataset.invoicePayment ?
+                        JSON.parse(this.dataset.invoicePayment) :
+                        null;
+                    const role = this.dataset.role.replace(/"/g, '');
 
-                    // Isi data pembayaran
-                    form.querySelector('[name="tanggal_bayar"]').value =
-                        payment.tanggal_bayar.split('T')[0];
-                    form.querySelector('[name="metode_bayar"]').value =
-                        payment.metode_bayar;
+                    /* RESET */
+                    formBayar.reset();
+                    toggleTolak.checked = false;
+                    toggleTolak.disabled = false;
+                    wrapperTolak.classList.add('d-none');
+                    btnBayar.classList.add('d-none');
+                    buktiWrapper.classList.add('d-none');
+                    catatanSupplier.readOnly = true;
 
-                    document.getElementById('jumlah_bayar_view').value =
-                        formatRupiah(payment.jumlah_bayar);
-                    document.getElementById('jumlah_bayar').value =
-                        parseInt(payment.jumlah_bayar);
-
-                    // Catatan manajer (dari PAYMENT)
-                    document.getElementById('catatan_manajer').value =
-                        payment.catatan_manajer ?? '-';
-
-                    // Preview bukti
-                    if (payment.bukti_pembayaran) {
-                        document.getElementById('bukti_preview').href =
-                            '/' + payment.bukti_pembayaran;
-                        document.getElementById('bukti_preview_wrapper')
-                            .classList.remove('d-none');
-                    }
-
-                    // Disable semua input
-                    form.querySelectorAll('input, select, textarea').forEach(el => {
-                        el.disabled = true;
+                    formBayar.querySelectorAll('input,select,textarea').forEach(el => {
+                        el.disabled = false;
                     });
 
-                    // Sembunyikan tombol submit
-                    document.getElementById('btnSimpanPembayaran').classList.add('d-none');
+                    /* DATA */
+                    document.getElementById('invoice_id').value = invoice.invoice_id;
+                    document.getElementById('nomor_invoice').innerText = invoice.nomor_invoice;
+                    document.getElementById('tanggal_invoice').innerText = invoice.tanggal_invoice;
+                    document.getElementById('total_invoice').innerText = invoice.total_invoice;
+                    catatanSupplier.value = invoice.catatan_supplier ?? '';
+
+                    const statusEl = document.getElementById('status_invoice');
+                    statusEl.className = 'badge';
+                    statusEl.innerText = invoice.status_invoice;
+
+                    /* MENUNGGU */
+                    if (invoice.status_invoice === 'Menunggu Pembayaran') {
+                        statusEl.classList.add('badge-warning');
+
+                        if (role === 'Manajer') {
+                            btnBayar.classList.remove('d-none');
+                            formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
+                        } else {
+                            formBayar.querySelectorAll('input,select,textarea').forEach(el => {
+                                el.disabled = true;
+                            });
+                        }
+                    }
+
+                    /* LUNAS */
+                    if (payment) {
+                        statusEl.classList.add('badge-success');
+
+                        formBayar.querySelector('[name="tanggal_bayar"]').value = payment
+                            .tanggal_bayar.split('T')[0];
+                        formBayar.querySelector('[name="metode_bayar"]').value = payment
+                            .metode_bayar;
+                        document.getElementById('jumlah_bayar_view').value = payment.jumlah_bayar;
+                        document.getElementById('catatan_manajer').value = payment
+                            .catatan_manajer ?? '-';
+
+                        if (payment.bukti_pembayaran) {
+                            document.getElementById('bukti_preview').href = '/' + payment
+                                .bukti_pembayaran;
+                            buktiWrapper.classList.remove('d-none');
+                        }
+
+                        formBayar.querySelectorAll('input,select,textarea').forEach(el => {
+                            if (el.id !== 'catatan_supplier') {
+                                el.disabled = true;
+                            }
+                        });
+
+                        if (role === 'Supplier') {
+                            wrapperTolak.classList.remove('d-none');
+                            toggleTolak.disabled = false; // 🔥 FIX UTAMA
+                        }
+                    }
+
+                    $('#modalBayarInvoice').modal('show');
+                });
+            });
+
+            /* ================= SUBMIT TOLAK ================= */
+            // toggleTolak.addEventListener('change', function() {
+            //     if (this.checked) {
+            //         const invoiceId = document.getElementById('invoice_id').value;
+            //         formTolak.action = `/invoice/reject/${invoiceId}`;
+            //         document.getElementById('catatan_supplier_hidden').value = catatanSupplier.value;
+            //         btnTolakInvoice.classList.remove('d-none');
+            //     }
+            // });
+
+            /* ================= TOLAK INVOICE ================= */
+            btnTolakInvoice.addEventListener('click', function() {
+
+                if (!catatanSupplier.value.trim()) {
+                    alert('Catatan supplier wajib diisi');
+                    return;
                 }
 
-                $('#modalBayarInvoice').modal('show');
+                if (!confirm('Yakin ingin menolak invoice ini?')) return;
+
+                const invoiceId = document.getElementById('invoice_id').value;
+
+                document.getElementById('invoice_id_tolak').value = invoiceId;
+                document.getElementById('catatan_supplier_hidden').value = catatanSupplier.value;
+
+                // ✅ PENULISAN ACTION YANG BENAR
+                formTolak.action = `/invoice/reject/${invoiceId}`;
+                formTolak.submit();
             });
+
         });
     </script>
 
@@ -440,10 +494,15 @@
     <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
 
+            <form id="formTolakInvoice" method="POST">
+                @csrf
+                <input type="hidden" name="invoice_id" id="invoice_id_tolak">
+                <input type="hidden" name="catatan_supplier" id="catatan_supplier_hidden">
+            </form>
+
             <form id="formBayarInvoice" method="POST" enctype="multipart/form-data">
                 @csrf
 
-                <!-- HEADER -->
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fa fa-file-invoice"></i> Informasi Invoice
@@ -453,25 +512,29 @@
 
                 <div class="modal-body">
 
-                    <!-- INFORMASI INVOICE -->
                     <div class="border rounded p-3 mb-3 bg-light">
 
-                        <input type="hidden" name="invoice_id" id="invoice_id">
-
-                        <div><strong>No Invoice:</strong> <span id="nomor_invoice">-</span></div>
-                        <div><strong>Tanggal Invoice:</strong> <span id="tanggal_invoice">-</span></div>
-                        <div><strong>Status:</strong> <span id="status_invoice" class="badge">-</span></div>
-                        <div><strong>Total:</strong> Rp <span id="total_invoice">0</span></div>
-
-                        <div class="mt-2">
-                            <strong>Catatan Supplier:</strong><br>
-                            <span id="catatan_supplier" class="text-muted">-</span>
+                        <!-- TOGGLE TOLAK -->
+                        <div id="wrapperTolakInvoice" class="form-check mb-2 d-none">
+                            <input class="form-check-input" type="checkbox" id="toggleTolakInvoice">
+                            <label class="form-check-label text-danger" for="toggleTolakInvoice">
+                                Tolak Invoice
+                            </label>
                         </div>
+
+                        <input type="hidden" id="invoice_id">
+
+                        <div><strong>No Invoice:</strong> <span id="nomor_invoice"></span></div>
+                        <div><strong>Tanggal:</strong> <span id="tanggal_invoice"></span></div>
+                        <div><strong>Status:</strong> <span id="status_invoice" class="badge"></span></div>
+                        <div><strong>Total:</strong> Rp <span id="total_invoice"></span></div>
+
+                        <label class="mt-2"><strong>Catatan Supplier</strong></label>
+                        <textarea id="catatan_supplier" class="form-control" rows="4" readonly></textarea>
                     </div>
 
-                    <!-- FORM PEMBAYARAN -->
-                    <h6 class="text-primary mb-2">
-                        <i class="fa fa-money-bill"></i> Pembayaran Invoice
+                    <h6 class="text-primary">
+                        <i class="fa fa-money-bill"></i> Pembayaran
                     </h6>
 
                     <div class="form-group">
@@ -482,47 +545,49 @@
                     <div class="form-group">
                         <label>Jumlah Bayar</label>
                         <input type="text" id="jumlah_bayar_view" class="form-control" readonly>
-                        <input type="hidden" name="jumlah_bayar" id="jumlah_bayar">
+                        <input type="hidden" id="jumlah_bayar" name="jumlah_bayar">
                     </div>
 
                     <div class="form-group">
-                        <label>Metode Pembayaran</label>
+                        <label>Metode</label>
                         <select name="metode_bayar" class="form-control">
                             <option value="">Pilih</option>
-                            <option value="Transfer Bank">Transfer Bank</option>
-                            <option value="Cash">Cash</option>
-                            <option value="QRIS">QRIS</option>
+                            <option>Transfer Bank</option>
+                            <option>Cash</option>
+                            <option>QRIS</option>
                         </select>
                     </div>
 
                     <div id="bukti_preview_wrapper" class="mb-2 d-none">
-                        <label>Bukti Pembayaran</label><br>
                         <a href="#" target="_blank" id="bukti_preview" class="btn btn-info btn-sm">
-                            Lihat Bukti Pembayaran
+                            Lihat Bukti
                         </a>
                     </div>
 
                     <div class="form-group">
-                        <label>Upload Bukti Pembayaran</label>
+                        <label>Upload Bukti</label>
                         <input type="file" name="bukti_pembayaran" class="form-control-file">
                     </div>
 
                     <div class="form-group">
                         <label>Catatan Manajer</label>
-                        <textarea id="catatan_manajer" class="form-control" rows="2" readonly>-</textarea>
+                        <textarea id="catatan_manajer" class="form-control" rows="2" readonly></textarea>
                     </div>
                 </div>
 
-                <!-- FOOTER -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <button class="btn btn-secondary" data-dismiss="modal">
                         Tutup
                     </button>
-                    <button type="submit" class="btn btn-success" id="btnSimpanPembayaran">
+
+                    <button type="button" class="btn btn-danger d-none" id="btnTolakInvoice">
+                        Simpan Tolak
+                    </button>
+
+                    <button type="submit" class="btn btn-success d-none" id="btnSimpanPembayaran">
                         Simpan Pembayaran
                     </button>
                 </div>
-
             </form>
 
         </div>
