@@ -13,7 +13,7 @@ class InvoiceController extends Controller
     // Buat invoice dari PO
     public function createFromPo($poId)
     {
-        $po = PurchaseOrder::with('invoice')->findOrFail($poId);
+        $po = PurchaseOrder::with(['invoice', 'invoice.payment'])->findOrFail($poId);
 
         // ❌ Jika invoice sudah ada
         if ($po->invoice) {
@@ -50,19 +50,32 @@ class InvoiceController extends Controller
         }
 
         $request->validate([
-            'jumlah_bayar' => 'required|numeric|min:1',
-            'tanggal_bayar' => 'required|date|before_or_equal:today',
+            'jumlah_bayar'      => 'required|numeric|min:1',
+            'tanggal_bayar'     => 'required|date|before_or_equal:today',
             'metode_bayar'      => 'required|string|max:50',
             'bukti_pembayaran'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         DB::transaction(function () use ($request, $invoice) {
 
-            // upload file (jika ada)
-            $path = $request->hasFile('bukti_pembayaran')
-                ? $request->file('bukti_pembayaran')
-                ->store('bukti-pembayaran', 'public')
-                : optional($invoice->payment)->bukti_pembayaran;
+            $path = optional($invoice->payment)->bukti_pembayaran;
+
+            // ✅ JIKA ADA FILE BARU
+            if ($request->hasFile('bukti_pembayaran')) {
+
+                // 🗑️ HAPUS FILE LAMA
+                if ($path && file_exists(public_path($path))) {
+                    unlink(public_path($path));
+                }
+
+                // ⬆️ UPLOAD FILE BARU
+                $file = $request->file('bukti_pembayaran');
+                $filename = 'INV_' . $invoice->invoice_id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path('bukti-pembayaran'), $filename);
+
+                $path = 'bukti-pembayaran/' . $filename;
+            }
 
             InvoicePayment::updateOrCreate(
                 ['invoice_id' => $invoice->invoice_id],
@@ -78,7 +91,6 @@ class InvoiceController extends Controller
             // Update invoice
             $invoice->update([
                 'status_invoice' => 'Lunas',
-                'alasan_ditolak' => null
             ]);
 
             // Update PO
@@ -89,6 +101,8 @@ class InvoiceController extends Controller
 
         return back()->with('success', 'Pembayaran invoice berhasil disimpan');
     }
+
+
 
     // Tolak invoice
     public function reject(Request $request, $invoiceId)
