@@ -10,6 +10,7 @@ class PurchaseOrder extends Model
     protected $primaryKey = 'po_id';
 
     protected $fillable = [
+        'kode_po',
         'supplier_id',
         'tanggal_po',
         'total_po',
@@ -46,7 +47,7 @@ class PurchaseOrder extends Model
                 'Diterima Supplier',
                 'Ditolak Supplier',
                 'Dikirim Supplier',
-                'Selesai'
+                'Retur',
             ]);
         } else if ($role === 'Manajer') {
             $q->whereIn('status_po', [
@@ -56,7 +57,8 @@ class PurchaseOrder extends Model
                 'Diterima Supplier',
                 'Ditolak Supplier',
                 'Dikirim Supplier',
-                'Selesai'
+                'Selesai',
+                'Retur',
             ]);
         } elseif ($role === 'Supplier') {
             $q->whereIn('status_po', [
@@ -64,6 +66,7 @@ class PurchaseOrder extends Model
                 'Diterima Supplier',
                 'Ditolak Supplier',
                 'Dikirim Supplier',
+                'Retur',
                 'Selesai'
             ])->where('supplier_id', auth()->user()->supplier->supplier_id);
         } else {

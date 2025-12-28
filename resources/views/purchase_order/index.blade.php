@@ -45,6 +45,7 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
+                                    <th>Kode</th>
                                     <th>ID PO</th>
                                     <th>Supplier</th>
                                     <th>Tanggal PO</th>
@@ -61,6 +62,7 @@
                                 @forelse ($po as $item)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $item->kode_po }}</td>
                                         <td>PO-{{ $item->po_id }}</td>
                                         <td>{{ $item->supplier->nama_supplier ?? '-' }}</td>
 
@@ -193,6 +195,7 @@
             $('#po_id').val(po.po_id);
 
             // info utama
+            $('#d_po_kode').text(po.kode_po);
             $('#d_po_id').text('PO-' + po.po_id);
             $('#d_supplier').text(po.supplier?.nama_supplier ?? '-');
             $('#d_tanggal').text(po.tanggal_po);
@@ -469,6 +472,10 @@
 
                 {{-- INFO UTAMA --}}
                 <table class="table table-sm table-borderless mb-3">
+                    <tr>
+                        <th width="150">Kode PO</th>
+                        <td id="d_po_kode"></td>
+                    </tr>
                     <tr>
                         <th width="150">ID PO</th>
                         <td id="d_po_id"></td>

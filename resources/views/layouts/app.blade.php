@@ -206,6 +206,16 @@
                             </a>
                         </li>
                     </ul>
+
+                    <ul class="sidebar-menu">
+                        {{-- <li class="menu-header">Dashboard</li> --}}
+                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Retur' ? 'active' : '' }}">
+                            <a class="nav-link" href="{{ route('retur') }}">
+                                <i class="fas fa-fire"></i>
+                                <span>Retur</span>
+                            </a>
+                        </li>
+                    </ul>
                 </aside>
             </div>
 

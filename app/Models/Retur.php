@@ -14,6 +14,17 @@ class Retur extends Model
         'produk_id',
         'qty_retur',
         'alasan',
-        'tanggal_retur'
+        'tanggal_retur',
+        'status_retur',
     ];
+
+    public function produk()
+    {
+        return $this->belongsTo(Produk::class, 'produk_id');
+    }
+
+    public function purchaseOrder()
+    {
+        return $this->belongsTo(PurchaseOrder::class, 'po_id', 'po_id');
+    }
 }

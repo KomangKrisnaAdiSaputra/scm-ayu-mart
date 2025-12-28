@@ -17,6 +17,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
 use App\Http\Controllers\PengirimanController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReturController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,30 +84,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/payment/{invoiceId}', 'savePayment');
         Route::post('/reject/{invoiceId}', 'reject');
     });
-});
 
-/*
-|--------------------------------------------------------------------------
-| ROUTE GUDANG
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:Gudang'])->group(function () {
+    Route::prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
+        Route::post('/{id}/terima', 'terima')->name('.terima');
+        Route::post('/{id}/tolak', 'tolak')->name('.tolak');
 
-    Route::get('/gudang', [DashboardGudangController::class, 'index']);
-
-    Route::get('/gudang/stok', [StokController::class, 'index']);
-
-    Route::get('/gudang/po/create', [PurchaseOrderController::class, 'create']);
-    Route::post('/gudang/po', [PurchaseOrderController::class, 'store']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| ROUTE SUPPLIER
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'role:Supplier'])->group(function () {
-
-    Route::get('/supplier', [SupplierPOController::class, 'index']);
-    Route::post('/supplier/po/{id}', [SupplierPOController::class, 'updateStatus']);
+        Route::post('store', 'store')->name('.store');
+        Route::get('create', 'create')->name('.create');
+        Route::get('/', 'index')->name('');
+    });
 });

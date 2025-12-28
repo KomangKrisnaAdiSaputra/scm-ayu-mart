@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('purchase_order', function (Blueprint $table) {
             $table->id('po_id');
             $table->unsignedBigInteger('supplier_id')->nullable();
+            $table->string('kode_po')->unique();
             $table->dateTime('tanggal_po');
             $table->integer('total_po')->nullable();
             $table->enum('status_po', [
@@ -24,7 +25,8 @@ return new class extends Migration
                 'Diterima Supplier',
                 'Ditolak Supplier',
                 'Dikirim Supplier',
-                'Selesai'
+                'Selesai',
+                'Retur'
             ]);
             $table->enum('status_pembayaran', ['Belum Bayar', 'Sudah Bayar']);
             $table->dateTime('tanggal_pembayaran')->nullable();

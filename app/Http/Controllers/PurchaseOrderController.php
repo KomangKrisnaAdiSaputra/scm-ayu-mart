@@ -7,6 +7,7 @@ use App\Models\Produk;
 use App\Models\PurchaseOrder;
 use App\Models\StokGudang;
 use App\Models\Supplier;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -76,7 +77,25 @@ class PurchaseOrderController extends Controller
                 $total += $item['qty'] * $item['harga'];
             }
 
+            $today = Carbon::now()->format('Ymd');
+
+            // ambil PO terakhir hari ini
+            $lastPo = PurchaseOrder::whereDate('created_at', today())
+                ->orderBy('po_id', 'desc')
+                ->first();
+
+            $lastNumber = 0;
+
+            if ($lastPo && preg_match('/PO-\d{8}-(\d+)/', $lastPo->kode_po, $matches)) {
+                $lastNumber = (int) $matches[1];
+            }
+
+            $nextNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+
+            $kodePo = 'PO-' . $today . '-' . $nextNumber;
+
             $po = PurchaseOrder::create([
+                'kode_po' => $kodePo,
                 'supplier_id' => $request->supplier_id,
                 'tanggal_po' => now(),
                 'total_po' => $total,

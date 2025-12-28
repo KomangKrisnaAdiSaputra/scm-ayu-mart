@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('qty_retur');
             $table->string('alasan', 150);
             $table->dateTime('tanggal_retur');
+            $table->enum('status_retur', ['Menunggu Konfirmasi', 'Diterima', 'Ditolak'])->default('Menunggu Konfirmasi');
 
             $table->foreign('po_id')->references('po_id')->on('purchase_order');
             $table->foreign('produk_id')->references('produk_id')->on('produk');
