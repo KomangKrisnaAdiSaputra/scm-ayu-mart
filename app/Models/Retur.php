@@ -16,6 +16,8 @@ class Retur extends Model
         'alasan',
         'tanggal_retur',
         'status_retur',
+        'payment',
+        'catatan',
     ];
 
     public function produk()
@@ -26,5 +28,10 @@ class Retur extends Model
     public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class, 'po_id', 'po_id');
+    }
+
+    function tb_payment()
+    {
+        return $this->hasOne(ReturPayment::class, 'retur_id', 'retur_id');
     }
 }

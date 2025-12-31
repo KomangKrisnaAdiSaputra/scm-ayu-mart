@@ -86,8 +86,14 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
-        Route::post('/{id}/terima', 'terima')->name('.terima');
         Route::post('/{id}/tolak', 'tolak')->name('.tolak');
+        // Route::post('/{id}/terima', 'terima')->name('.terima');
+
+        Route::post('{id}/terima', 'terimaRetur');
+        Route::post('payment', 'storeReturPayment')->name('.store.payment');
+        Route::post('payment/{id}/bayar', 'bayar');
+        Route::post('{id}/kirim',  'kirimBarang');
+        Route::post('{id}/selesai', 'selesai');
 
         Route::post('store', 'store')->name('.store');
         Route::get('create', 'create')->name('.create');

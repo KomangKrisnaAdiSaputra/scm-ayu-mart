@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
 use App\Models\Retur;
+use App\Models\ReturPayment;
 use App\Models\StokGudang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,8 @@ class ReturController extends Controller
 
         $retur = Retur::with([
             'produk',
-            'purchaseOrder'
+            'purchaseOrder',
+            'tb_payment'
         ])
             ->when($search, function ($q) use ($search) {
                 $q->whereHas('produk', function ($qp) use ($search) {
@@ -100,120 +102,233 @@ class ReturController extends Controller
         }
     }
 
-    public function terima($id)
+    public function terimaRetur(Request $request, $id)
     {
-        DB::beginTransaction();
+        $request->validate([
+            'jenis_retur' => 'required|in:dana,barang',
+        ]);
 
-        try {
-            $retur = Retur::with(['purchaseOrder.detail', 'produk'])
-                ->lockForUpdate()
-                ->findOrFail($id);
+        $retur = Retur::findOrFail($id);
 
-            if ($retur->status_retur !== 'Menunggu Konfirmasi') {
-                throw new \Exception('Retur sudah diproses');
-            }
+        abort_if(auth()->user()->role !== 'Supplier', 403);
+        abort_if($retur->status_retur !== 'Menunggu Konfirmasi', 400);
 
-            $po = $retur->purchaseOrder;
-
-            // Ambil detail PO produk terkait
-            $poDetail = $po->detail()
-                ->where('produk_id', $retur->produk_id)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$poDetail) {
-                throw new \Exception('Detail PO tidak ditemukan');
-            }
-
-            $qtyPo    = $poDetail->qty;
-            $qtyRetur = $retur->qty_retur;
-
-            if ($qtyRetur > $qtyPo) {
-                throw new \Exception('Qty retur melebihi qty PO');
-            }
-
-            /**
-             * 1️⃣ Hitung qty masuk gudang
-             */
-            $qtyMasukGudang = $qtyPo - $qtyRetur;
-
-            /**
-             * 2️⃣ Tambah stok gudang
-             */
-            $stok = StokGudang::where('produk_id', $retur->produk_id)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$stok) {
-                throw new \Exception('Stok gudang tidak ditemukan');
-            }
-
-            $stok->increment('stok_total', $qtyMasukGudang);
-
-            /**
-             * 3️⃣ Update qty PO detail
-             */
-            $poDetail->update([
-                'qty' => $qtyMasukGudang
-            ]);
-
-            /**
-             * 4️⃣ Hitung ulang TOTAL PO
-             */
-            $totalPoBaru = $po->detail->sum(function ($item) {
-                return $item->qty * $item->harga;
-            });
-
-            $po->update([
-                'total_po' => $totalPoBaru,
-                'status_po' => 'Retur'
-            ]);
-
-            /**
-             * 5️⃣ Update status retur
-             */
+        if ($request->jenis_retur === 'dana') {
             $retur->update([
-                'status_retur' => 'Diterima'
+                'status_retur' => "Diterima",
+                'payment' => 1,
+                'catatan' => $request->catatan
             ]);
-
-            DB::commit();
-
-            return back()->with('success', 'Retur diterima, stok & total PO diperbarui');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', $e->getMessage());
+        } else {
+            $retur->update([
+                'status_retur' => "Diterima",
+                'payment' => 0,
+                'catatan' => $request->catatan
+            ]);
         }
+
+        return back()->with('success', 'Retur berhasil diterima');
+    }
+
+    public function storeReturPayment(Request $request)
+    {
+        abort_if(auth()->user()->role !== 'Manajer', 403);
+
+        $request->validate([
+            'retur_id' => 'required|exists:retur,retur_id',
+            'jumlah' => 'required|numeric|min:1',
+            'metode_pembayaran' => 'required',
+        ]);
+
+        $retur = Retur::findOrFail($request->retur_id);
+        abort_if($retur->payment !== 1, 400);
+        dd($retur);
+
+        ReturPayment::create([
+            'retur_id' => $retur->id,
+            'po_id' => $retur->po_id,
+            'jumlah' => $request->jumlah,
+            'metode_pembayaran' => $request->metode_pembayaran,
+            'tanggal_pembayaran' => now(),
+            'status' => 'Menunggu Pembayaran',
+            'created_by' => auth()->id(),
+        ]);
+
+        $retur->update([
+            'status_retur' => 'Menunggu Pembayaran'
+        ]);
+
+        return back()->with('success', 'Retur payment berhasil dibuat');
+    }
+
+    public function bayar($id)
+    {
+        abort_if(auth()->user()->role !== 'Supplier', 403);
+
+        $payment = ReturPayment::findOrFail($id);
+
+        abort_if($payment->status !== 'Menunggu Pembayaran', 400);
+
+        $payment->update([
+            'status' => 'Dibayar',
+            'tanggal_pembayaran' => now(),
+        ]);
+
+        $payment->retur->update([
+            'status_retur' => 'Selesai'
+        ]);
+
+        return back()->with('success', 'Pengembalian dana berhasil dibayar');
+    }
+
+    public function kirimBarang($id)
+    {
+        abort_if(auth()->user()->role !== 'Supplier', 403);
+
+        $retur = Retur::findOrFail($id);
+
+        abort_if($retur->status_retur !== 'Pengembalian Barang', 400);
+
+        $retur->update([
+            'status_retur' => 'Dikirim Supplier'
+        ]);
+
+        return back()->with('success', 'Barang retur telah dikirim');
+    }
+
+    public function selesai($id)
+    {
+        abort_if(auth()->user()->role !== 'Gudang', 403);
+
+        $retur = Retur::findOrFail($id);
+
+        abort_if($retur->status_retur !== 'Dikirim Supplier', 400);
+
+        // OPTIONAL: tambah stok
+        // StokGudang::increment(...);
+
+        $retur->update([
+            'status_retur' => 'Selesai'
+        ]);
+
+        return back()->with('success', 'Barang retur diterima gudang');
     }
 
 
-    public function tolak($id)
-    {
-        DB::beginTransaction();
+    // public function terima($id)
+    // {
+    //     DB::beginTransaction();
 
-        try {
-            $retur = Retur::with('purchaseOrder')
-                ->lockForUpdate()
-                ->findOrFail($id);
+    //     try {
+    //         $retur = Retur::with(['purchaseOrder.detail', 'produk'])
+    //             ->lockForUpdate()
+    //             ->findOrFail($id);
 
-            if ($retur->status_retur !== 'Menunggu Konfirmasi') {
-                throw new \Exception('Retur sudah diproses');
-            }
+    //         if ($retur->status_retur !== 'Menunggu Konfirmasi') {
+    //             throw new \Exception('Retur sudah diproses');
+    //         }
 
-            $retur->update([
-                'status_retur' => 'Ditolak'
-            ]);
+    //         $po = $retur->purchaseOrder;
 
-            // PO kembali ke kondisi sebelumnya
-            $retur->purchaseOrder->update([
-                'status_po' => 'Dikirim Supplier'
-            ]);
+    //         // Ambil detail PO produk terkait
+    //         $poDetail = $po->detail()
+    //             ->where('produk_id', $retur->produk_id)
+    //             ->lockForUpdate()
+    //             ->first();
 
-            DB::commit();
+    //         if (!$poDetail) {
+    //             throw new \Exception('Detail PO tidak ditemukan');
+    //         }
 
-            return back()->with('success', 'Retur ditolak');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', $e->getMessage());
-        }
-    }
+    //         $qtyPo    = $poDetail->qty;
+    //         $qtyRetur = $retur->qty_retur;
+
+    //         if ($qtyRetur > $qtyPo) {
+    //             throw new \Exception('Qty retur melebihi qty PO');
+    //         }
+
+    //         /**
+    //          * 1️⃣ Hitung qty masuk gudang
+    //          */
+    //         $qtyMasukGudang = $qtyPo - $qtyRetur;
+
+    //         /**
+    //          * 2️⃣ Tambah stok gudang
+    //          */
+    //         $stok = StokGudang::where('produk_id', $retur->produk_id)
+    //             ->lockForUpdate()
+    //             ->first();
+
+    //         if (!$stok) {
+    //             throw new \Exception('Stok gudang tidak ditemukan');
+    //         }
+
+    //         $stok->increment('stok_total', $qtyMasukGudang);
+
+    //         /**
+    //          * 3️⃣ Update qty PO detail
+    //          */
+    //         $poDetail->update([
+    //             'qty' => $qtyMasukGudang
+    //         ]);
+
+    //         /**
+    //          * 4️⃣ Hitung ulang TOTAL PO
+    //          */
+    //         $totalPoBaru = $po->detail->sum(function ($item) {
+    //             return $item->qty * $item->harga;
+    //         });
+
+    //         $po->update([
+    //             'total_po' => $totalPoBaru,
+    //             'status_po' => 'Retur'
+    //         ]);
+
+    //         /**
+    //          * 5️⃣ Update status retur
+    //          */
+    //         $retur->update([
+    //             'status_retur' => 'Diterima'
+    //         ]);
+
+    //         DB::commit();
+
+    //         return back()->with('success', 'Retur diterima, stok & total PO diperbarui');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return back()->with('error', $e->getMessage());
+    //     }
+    // }
+
+
+    // public function tolak($id)
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $retur = Retur::with('purchaseOrder')
+    //             ->lockForUpdate()
+    //             ->findOrFail($id);
+
+    //         if ($retur->status_retur !== 'Menunggu Konfirmasi') {
+    //             throw new \Exception('Retur sudah diproses');
+    //         }
+
+    //         $retur->update([
+    //             'status_retur' => 'Ditolak'
+    //         ]);
+
+    //         // PO kembali ke kondisi sebelumnya
+    //         $retur->purchaseOrder->update([
+    //             'status_po' => 'Dikirim Supplier'
+    //         ]);
+
+    //         DB::commit();
+
+    //         return back()->with('success', 'Retur ditolak');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return back()->with('error', $e->getMessage());
+    //     }
+    // }
 }
