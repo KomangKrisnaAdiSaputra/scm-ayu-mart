@@ -12,7 +12,7 @@ class DashboardController extends Controller
     {
         $produkMenipis = Produk::with('stok')
             ->whereHas('stok', function ($q) {
-                $q->whereColumn('stok_total', '<', 'stok_minimum');
+                $q->whereColumn('stok_total', '<=', 'stok_minimum');
             })
             ->limit(5)
             ->get();

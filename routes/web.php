@@ -62,14 +62,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::prefix('pengiriman')->name('pengiriman')->controller(PengirimanController::class)->group(function () {
+    Route::middleware(['role:Gudang|Cabang|Kurir'])->prefix('pengiriman')->name('pengiriman')->controller(PengirimanController::class)->group(function () {
         Route::post('ambil', 'ambil')->name('.ambil');
         Route::post('gagal', 'gagal')->name('.gagal');
         Route::post('diterima', 'diterima')->name('.diterima');
         Route::get('/', 'index');
     });
 
-    Route::prefix('purchase-order')->name('purchaseorder')->controller(PurchaseOrderController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('purchase-order')->name('purchaseorder')->controller(PurchaseOrderController::class)->group(function () {
         Route::get('/create',  'create')->name('.create');
         Route::get('/{po}/edit',  'edit')->name('.edit');
         Route::post('/store',  'store')->name('.store');
@@ -79,13 +79,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
         Route::post('/create/{poId}', 'createFromPo');
         Route::post('/payment/{invoiceId}', 'savePayment');
         Route::post('/reject/{invoiceId}', 'reject');
     });
 
-    Route::prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
         Route::post('/{id}/terima', 'terima')->name('.terima');
         Route::post('/{id}/tolak', 'tolak')->name('.tolak');
 

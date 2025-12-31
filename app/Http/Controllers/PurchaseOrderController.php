@@ -117,6 +117,7 @@ class PurchaseOrderController extends Controller
                 ->with('success', 'Purchase Order berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
+            dd($e->getMessage());
             return back()->withErrors($e->getMessage());
         }
     }

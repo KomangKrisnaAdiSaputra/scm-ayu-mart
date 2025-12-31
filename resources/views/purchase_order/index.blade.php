@@ -113,6 +113,54 @@
                                                 Detail
                                             </button>
 
+                                            @php
+                                                $role = auth()->user()->role;
+                                                $status = $item->status_po;
+                                                $pembayaran = $item->status_pembayaran;
+
+                                                $bolehUbahStatus = false;
+
+                                                if ($role === 'Gudang') {
+                                                    if (
+                                                        in_array($status, [
+                                                            'Draft',
+                                                            'Menunggu Persetujuan',
+                                                            'Dikirim Supplier',
+                                                        ])
+                                                    ) {
+                                                        $bolehUbahStatus = true;
+                                                    }
+                                                }
+
+                                                if ($role === 'Manajer') {
+                                                    if ($status === 'Menunggu Persetujuan') {
+                                                        $bolehUbahStatus = true;
+                                                    }
+                                                }
+
+                                                if ($role === 'Supplier') {
+                                                    if (in_array($status, ['Disetujui Manajer', 'Diterima Supplier'])) {
+                                                        $bolehUbahStatus = true;
+                                                    }
+
+                                                    // RULE KHUSUS: sudah diterima tapi belum bayar → LOCK
+                                                    if (
+                                                        $status === 'Diterima Supplier' &&
+                                                        $pembayaran === 'Belum Bayar'
+                                                    ) {
+                                                        $bolehUbahStatus = false;
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @if ($bolehUbahStatus)
+                                                <button class="btn btn-sm btn-warning" data-toggle="modal"
+                                                    data-target="#modalUpdateStatus"
+                                                    onclick="openUpdateStatusModal({{ $item }}, '{{ auth()->user()->role }}')">
+                                                    Ubah Status
+                                                </button>
+                                            @endif
+
                                             @if (!$item->invoice && auth()->user()->role == 'Supplier' && $item->status_po == 'Diterima Supplier')
                                                 <button type="button" class="btn btn-sm btn-primary btn-buat-invoice"
                                                     data-po-id="{{ $item->po_id }}">
@@ -186,12 +234,6 @@
             const po = $(this).data('po');
             const role = "{{ auth()->user()->role }}";
 
-            // set form action
-            $('#formUpdateStatus').attr(
-                'action',
-                `/purchase-order/${po.po_id}/update/status`
-            );
-
             $('#po_id').val(po.po_id);
 
             // info utama
@@ -224,25 +266,7 @@
             $('#detailProdukPO').html(html);
             $('#d_total_po').text('Rp ' + total.toLocaleString('id-ID'));
 
-            // status dropdown
-            const allowed = rules[role]?.[po.status_po] ?? [];
-            // let options = `<option value="" readonly>Select</option>`;
-            let options = '';
 
-            allowed.forEach(status => {
-                options += `<option value="${status}">${status}</option>`;
-            });
-
-            if (options) {
-                $('#status_po').html(options);
-                $('#formUpdateStatus').show();
-            } else {
-                $('#formUpdateStatus').hide();
-            }
-
-            if (po.status_po == 'Diterima Supplier' && po.status_pembayaran == 'Belum Bayar') {
-                $('#formUpdateStatus').hide();
-            }
             $('#modalDetailPO').modal('show');
         });
 
@@ -439,6 +463,37 @@
                 });
             });
         });
+
+        function openUpdateStatusModal(po, role) {
+            document.getElementById('po_id').value = po.po_id;
+            document.getElementById('status_po').value = po.status_po;
+
+            $('#formUpdateStatus').attr(
+                'action',
+                `/purchase-order/${po.po_id}/update/status`
+            );
+
+            // status dropdown
+            const allowed = rules[role]?.[po.status_po] ?? [];
+            // let options = `<option value="" readonly>Select</option>`;
+            let options = '';
+            console.log(po, role, allowed);
+
+            allowed.forEach(status => {
+                options += `<option value="${status}">${status}</option>`;
+            });
+
+            if (options) {
+                $('#status_po').html(options);
+                $('#formUpdateStatus').show();
+            } else {
+                $('#formUpdateStatus').hide();
+            }
+
+            if (po.status_po == 'Diterima Supplier' && po.status_pembayaran == 'Belum Bayar') {
+                $('#formUpdateStatus').hide();
+            }
+        }
     </script>
 
 @endsection
@@ -450,19 +505,6 @@
             {{-- HEADER --}}
             <div class="modal-header d-flex justify-content-between align-items-center">
                 <h5 class="modal-title">Detail Purchase Order</h5>
-
-                {{-- FORM UPDATE STATUS --}}
-                <form action="" method="POST" id="formUpdateStatus" class="form-inline">
-                    @csrf
-                    <input type="hidden" name="po_id" id="po_id">
-
-                    <select name="status_po" id="status_po" class="form-control form-control-sm mr-2">
-                    </select>
-
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        Update
-                    </button>
-                </form>
 
                 <button type="button" class="close ml-3" data-dismiss="modal">&times;</button>
             </div>
@@ -664,6 +706,50 @@
 
             </form>
 
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalUpdateStatus" tabindex="-1" role="dialog"
+    aria-labelledby="modalUpdateStatusLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="modalUpdateStatusLabel">
+                    Ubah Status PO
+                </h6>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <form action="" method="POST" id="formUpdateStatus">
+                @csrf
+
+                <div class="modal-body">
+                    <input type="hidden" name="po_id" id="po_id">
+
+                    <div class="form-group mb-0">
+                        <label class="mb-1 font-weight-bold small">
+                            Status PO
+                        </label>
+                        <select name="status_po" id="status_po" class="form-control form-control-sm">
+                            <option value="">-- Pilih Status --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        Update
+                    </button>
+                </div>
+
+            </form>
         </div>
     </div>
 </div>

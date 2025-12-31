@@ -19,8 +19,6 @@ class PurchaseOrder extends Model
         'tanggal_pembayaran'
     ];
 
-    public $timestamps = false;
-
     public function invoice()
     {
         return $this->hasOne(Invoice::class, 'po_id');
@@ -48,6 +46,7 @@ class PurchaseOrder extends Model
                 'Ditolak Supplier',
                 'Dikirim Supplier',
                 'Retur',
+                'Selesai'
             ]);
         } else if ($role === 'Manajer') {
             $q->whereIn('status_po', [

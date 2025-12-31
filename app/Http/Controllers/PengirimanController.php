@@ -15,7 +15,7 @@ class PengirimanController extends Controller
     {
         $search = $request->search;
 
-        $pengiriman = Pengiriman::with([
+        $query = Pengiriman::with([
             'permintaan.detail.produk',
             'permintaan.cabang',
             'status_kurir'
@@ -36,8 +36,13 @@ class PengirimanController extends Controller
                         $q->where('nama_cabang', 'like', "%{$search}%");
                     });
             })
-            ->orderBy('tanggal_kirim', 'desc')
-            ->get();
+            ->orderBy('tanggal_kirim', 'desc');
+        if (auth()->user()->role === 'Cabang') {
+            $query->whereHas('permintaan', function ($q) {
+                $q->where('cabang_id', auth()->user()->cabang->cabang_id);
+            });
+        }
+        $pengiriman = $query->get();
 
         return view('pengiriman.index', compact('pengiriman', 'search'));
     }
