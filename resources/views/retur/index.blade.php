@@ -37,6 +37,7 @@
                                 <th>Qty Retur</th>
                                 <th>Tanggal</th>
                                 <th>Status</th>
+                                <th>Jenis Retur</th>
                                 <th>Action</th>
                             </tr>
 
@@ -63,6 +64,9 @@
                                             {{ $item->status_retur }}
                                         </span>
                                     </td>
+
+                                    <td>{{ $item->payment ? 'Pengembalian Dana' : 'Pengembalian Barang' }}</td>
+
                                     <td class="text-nowrap">
                                         {{-- DETAIL --}}
                                         <button class="btn btn-info btn-sm"
@@ -87,18 +91,18 @@
                                         @endif
 
                                         {{-- SUPPLIER: KIRIM BARANG --}}
-                                        @if (auth()->user()->role === 'Supplier' && $item->payment === 0)
-                                            <form action="{{ url('/retur/' . $item->id . '/kirim') }}" method="POST"
-                                                class="d-inline">
+                                        @if (auth()->user()->role === 'Supplier' && $item->payment === 0 && $item->status_retur === 'Diterima')
+                                            <form action="{{ route('retur.kirim', ['id' => $item->retur_id]) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 <button class="btn btn-warning btn-sm">Kirim Barang</button>
                                             </form>
                                         @endif
 
                                         {{-- GUDANG: SELESAI --}}
-                                        @if (auth()->user()->role === 'Gudang' && $item->status_retur === 'Dikirim Supplier')
-                                            <form action="{{ url('/retur/' . $item->id . '/selesai') }}" method="POST"
-                                                class="d-inline">
+                                        @if (auth()->user()->role === 'Gudang' && $item->status_retur === 'Dikirim')
+                                            <form action="{{ route('retur.selesai', ['id' => $item->retur_id]) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 <button class="btn btn-primary btn-sm">Selesai</button>
                                             </form>
@@ -122,6 +126,23 @@
                                                 data-target="#modalBayarRefund">
                                                 Bayar Refund
                                             </button>
+                                        @endif
+
+                                        {{-- STATUS DIBAYAR --}}
+                                        @if ($item->status_retur === 'Dibayar' && auth()->user()->role === 'Manajer')
+                                            <button class="btn btn-info btn-sm"
+                                                onclick='openDetailPayment(@json($item->tb_payment))'
+                                                data-toggle="modal" data-target="#modalDetailReturPayment">
+                                                Lihat Payment
+                                            </button>
+
+                                            <form action="{{ route('retur.selesai', $item->retur_id) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                <button class="btn btn-success btn-sm">
+                                                    Selesaikan
+                                                </button>
+                                            </form>
                                         @endif
 
 
@@ -199,6 +220,22 @@
                 document.getElementById('jumlah').value = this.dataset.jumlah;
             });
         });
+
+        function openDetailPayment(payment) {
+            $('#dp_metode').text(payment.metode_pembayaran);
+            $('#dp_jumlah').text(formatRupiah(payment.jumlah));
+            $('#dp_tanggal').text(payment.tanggal_pembayaran);
+            $('#dp_status').text(payment.status);
+            $('#dp_keterangan').text(payment.keterangan ?? '-');
+
+            if (payment.bukti_pembayaran) {
+                $('#dp_bukti')
+                    .attr('href', `/storage/${payment.bukti_pembayaran}`)
+                    .show();
+            } else {
+                $('#dp_bukti').hide();
+            }
+        }
     </script>
 
 @endsection
@@ -434,5 +471,55 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetailReturPayment" tabindex="-1">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Detail Retur Payment</h6>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <table class="table table-sm table-bordered">
+                    <tr>
+                        <th width="40%">Metode Pembayaran</th>
+                        <td id="dp_metode"></td>
+                    </tr>
+                    <tr>
+                        <th>Jumlah</th>
+                        <td id="dp_jumlah"></td>
+                    </tr>
+                    <tr>
+                        <th>Tanggal Bayar</th>
+                        <td id="dp_tanggal"></td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            <span class="badge badge-success" id="dp_status"></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Keterangan</th>
+                        <td id="dp_keterangan"></td>
+                    </tr>
+                    <tr>
+                        <th>Bukti</th>
+                        <td>
+                            <a href="" id="dp_bukti" target="_blank">Lihat Bukti</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+            </div>
+
+        </div>
     </div>
 </div>

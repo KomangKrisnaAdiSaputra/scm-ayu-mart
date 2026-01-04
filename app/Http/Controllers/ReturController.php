@@ -220,10 +220,10 @@ class ReturController extends Controller
 
         $retur = Retur::findOrFail($id);
 
-        abort_if($retur->status_retur !== 'Pengembalian Barang', 400);
+        abort_if($retur->payment !== 0, 400);
 
         $retur->update([
-            'status_retur' => 'Dikirim Supplier'
+            'status_retur' => 'Dikirim'
         ]);
 
         return back()->with('success', 'Barang retur telah dikirim');
@@ -231,20 +231,83 @@ class ReturController extends Controller
 
     public function selesai($id)
     {
-        abort_if(auth()->user()->role !== 'Gudang', 403);
+        abort_if(
+            !in_array(auth()->user()->role, ['Gudang', 'Manajer']),
+            403
+        );
 
         $retur = Retur::findOrFail($id);
 
-        abort_if($retur->status_retur !== 'Dikirim Supplier', 400);
+        // abort_if($retur->status_retur !== 'Dikirim Supplier', 400);
 
         // OPTIONAL: tambah stok
         // StokGudang::increment(...);
 
+        $poUpdate = [];
+        if ($retur->status_retur == "Dikirim") {
+            $po = $retur->purchaseOrder;
+            // Ambil detail PO produk terkait
+            $poDetail = $po->detail()
+                ->where('produk_id', $retur->produk_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$poDetail) {
+                throw new \Exception('Detail PO tidak ditemukan');
+            }
+
+            $qtyPo    = $poDetail->qty;
+            $qtyRetur = $retur->qty_retur;
+
+            if ($qtyRetur > $qtyPo) {
+                throw new \Exception('Qty retur melebihi qty PO');
+            }
+
+            /**
+             * 1️⃣ Hitung qty masuk gudang
+             */
+            $qtyMasukGudang = $qtyPo - $qtyRetur;
+
+            /**
+             * 2️⃣ Tambah stok gudang
+             */
+            $stok = StokGudang::where('produk_id', $retur->produk_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$stok) {
+                throw new \Exception('Stok gudang tidak ditemukan');
+            }
+
+            $stok->increment('stok_total', $qtyMasukGudang);
+
+            /**
+             * 3️⃣ Update qty PO detail
+             */
+            $poDetail->update([
+                'qty' => $qtyMasukGudang
+            ]);
+
+            /**
+             * 4️⃣ Hitung ulang TOTAL PO
+             */
+            $totalPoBaru = $po->detail->sum(function ($item) {
+                return $item->qty * $item->harga;
+            });
+
+            $poUpdate['total_po'] = $totalPoBaru;
+        }
+
+        $po->update([
+            ...$poUpdate,
+            'status_po' => 'Retur'
+        ]);
         $retur->update([
             'status_retur' => 'Selesai'
         ]);
 
-        return back()->with('success', 'Barang retur diterima gudang');
+
+        return back()->with('success', 'Retur barang success');
     }
 
 
