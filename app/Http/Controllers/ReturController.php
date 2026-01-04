@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaymentList;
 use App\Models\PurchaseOrder;
 use App\Models\Retur;
 use App\Models\ReturPayment;
@@ -33,7 +34,9 @@ class ReturController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('retur.index', compact('retur'));
+        $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Manajer")->get();
+
+        return view('retur.index', compact('retur', 'paymentLists'));
     }
 
     function create()
@@ -136,7 +139,7 @@ class ReturController extends Controller
         $request->validate([
             'retur_id' => 'required|exists:retur,retur_id',
             'jumlah' => 'required|numeric|min:1',
-            'metode_pembayaran' => 'required',
+            // 'metode_pembayaran' => 'required',
         ]);
 
         $retur = Retur::findOrFail($request->retur_id);
@@ -146,10 +149,10 @@ class ReturController extends Controller
             'retur_id' => $retur->retur_id,
             'po_id' => $retur->po_id,
             'jumlah' => $request->jumlah,
-            'metode_pembayaran' => $request->metode_pembayaran,
-            'tanggal_pembayaran' => now(),
+            // 'metode_pembayaran' => $request->metode_pembayaran,
+            // 'tanggal_pembayaran' => now(),
             'status' => 'Menunggu Pembayaran',
-            'created_by' => auth()->id(),
+            'created_by' => auth()->user()->users_id,
         ]);
 
         $retur->update([
@@ -244,8 +247,9 @@ class ReturController extends Controller
         // StokGudang::increment(...);
 
         $poUpdate = [];
+        $po = $retur->purchaseOrder;
+
         if ($retur->status_retur == "Dikirim") {
-            $po = $retur->purchaseOrder;
             // Ambil detail PO produk terkait
             $poDetail = $po->detail()
                 ->where('produk_id', $retur->produk_id)

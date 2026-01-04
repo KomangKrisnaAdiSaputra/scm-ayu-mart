@@ -109,21 +109,31 @@
                                         @endif
 
                                         @if (auth()->user()->role === 'Manajer' && $item->payment === 1 && !($item?->tb_payment ?? null))
-                                            <button class="btn btn-primary btn-sm"
+                                            <form action="{{ route('retur.store.payment') }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="retur_id" value="{{ $item->retur_id }}">
+
+                                                <input type="hidden" name="jumlah"
+                                                    value="{{ $item->produk->harga_beli }}">
+
+                                                <button class="btn btn-primary btn-sm">Buat Payment</button>
+                                            </form>
+                                            {{-- <button class="btn btn-primary btn-sm"
                                                 onclick="
     $('#rp_retur_id').val({{ $item->retur_id }});
     $('#rp_jumlah').val({{ $item->produk->harga_beli }});
 "
                                                 data-toggle="modal" data-target="#modalReturPayment">
                                                 Buat Payment
-                                            </button>
+                                            </button> --}}
                                         @endif
 
                                         @if (auth()->user()->role === 'Supplier' && $item?->tb_payment?->status === 'Menunggu Pembayaran')
                                             <button class="btn btn-success btn-sm btn-bayar-refund"
                                                 data-retur-id="{{ $item->retur_id }}" data-po-id="{{ $item->po_id }}"
                                                 data-jumlah="{{ $item->tb_payment->jumlah }}" data-toggle="modal"
-                                                data-target="#modalBayarRefund">
+                                                data-target="#modalBayarRefund"
+                                                data-payment-lists='@json($paymentLists)'>
                                                 Bayar Refund
                                             </button>
                                         @endif
@@ -184,6 +194,32 @@
 
 @section('js')
     <script>
+        const metodeSelect = document.getElementById('metode_pembayaran_refund');
+        const previewWrapper = document.getElementById('preview_metode_wrapper_refund');
+        const previewPhoto = document.getElementById('preview_metode_photo_refund');
+        const previewDescription = document.getElementById('preview_metode_description_refund');
+
+        metodeSelect.addEventListener('change', function() {
+
+            const selected = this.selectedOptions[0];
+
+            // RESET
+            previewWrapper.classList.add('d-none');
+            previewPhoto.src = '';
+            previewDescription.innerText = '';
+
+            if (!selected || !selected.dataset.photo) return;
+            if (selected.dataset.photo != "null") {
+                previewPhoto.src = selected.dataset.photo;
+                previewPhoto.classList.remove('d-none');
+            } else {
+                previewPhoto.classList.add('d-none');
+            }
+            previewDescription.innerText = selected.dataset.description || '';
+
+            previewWrapper.classList.remove('d-none');
+        });
+
         function openDetailRetur(retur) {
             // RETUR
             $('#r_tanggal').text(retur.tanggal_retur);
@@ -218,6 +254,32 @@
                 document.getElementById('retur_id').value = this.dataset.returId;
                 document.getElementById('po_id').value = this.dataset.poId;
                 document.getElementById('jumlah').value = this.dataset.jumlah;
+
+                const paymentLists = JSON.parse(this.dataset.paymentLists);
+
+                const metodeSelect = document.getElementById('metode_pembayaran_refund');
+
+                previewWrapper.classList.add('d-none');
+                previewPhoto.src = '';
+                previewDescription.innerText = '';
+
+
+                /* RESET OPTION */
+                metodeSelect.innerHTML = '<option value="">Pilih Metode</option>';
+                console.log(paymentLists);
+
+                paymentLists.forEach(item => {
+                    appendMetode(item);
+                });
+
+                function appendMetode(item) {
+                    const option = document.createElement('option');
+                    option.value = item.name;
+                    option.textContent = item.name;
+                    option.dataset.photo = item.photo ? '/' + item.photo : null;
+                    option.dataset.description = item.description ?? '';
+                    metodeSelect.appendChild(option);
+                }
             });
         });
 
@@ -230,7 +292,7 @@
 
             if (payment.bukti_pembayaran) {
                 $('#dp_bukti')
-                    .attr('href', `/storage/${payment.bukti_pembayaran}`)
+                    .attr('href', `/${payment.bukti_pembayaran}`)
                     .show();
             } else {
                 $('#dp_bukti').hide();
@@ -400,10 +462,21 @@
 
                     <div class="form-group">
                         <label class="small font-weight-bold">Metode Pembayaran</label>
-                        <select name="metode_pembayaran" class="form-control form-control-sm" required>
-                            <option value="Transfer">Transfer</option>
-                            {{-- <option value="Cash">Cash</option> --}}
+                        <select name="metode_bayar" id="metode_bayar" class="form-control">
+                            <option value="">Pilih</option>
+                            <option>Transfer Bank</option>
+                            <option>Cash</option>
+                            <option>QRIS</option>
                         </select>
+
+                        <div id="preview_metode_wrapper" class="mt-3 d-none">
+                            <div class="text-center">
+                                <img id="preview_metode_photo" src="" alt="Metode"
+                                    style="max-width:200px;max-height:200px;object-fit:contain;" class="mb-2 rounded">
+                            </div>
+
+                            <div class="text-muted text-center" id="preview_metode_description"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -435,12 +508,21 @@
 
                     <div class="mb-3">
                         <label>Metode Pembayaran</label>
-                        <select name="metode_pembayaran" class="form-control" required>
-                            <option value="">-- Pilih Metode --</option>
-                            <option value="Transfer Bank">Transfer Bank</option>
-                            <option value="Cash">Cash</option>
-                            <option value="E-Wallet">E-Wallet</option>
+                        <select name="metode_pembayaran" id="metode_pembayaran_refund" class="form-control">
+                            <option value="">Pilih</option>
+                            <option>Transfer Bank</option>
+                            <option>Cash</option>
+                            <option>QRIS</option>
                         </select>
+
+                        <div id="preview_metode_wrapper_refund" class="mt-3 d-none">
+                            <div class="text-center">
+                                <img id="preview_metode_photo_refund" src="" alt="Metode"
+                                    style="max-width:200px;max-height:200px;object-fit:contain;" class="mb-2 rounded">
+                            </div>
+
+                            <div class="text-muted text-center" id="preview_metode_description_refund"></div>
+                        </div>
                     </div>
 
                     <div class="mb-3">

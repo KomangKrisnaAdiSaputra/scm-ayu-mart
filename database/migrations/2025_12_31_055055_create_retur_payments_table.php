@@ -17,10 +17,10 @@ return new class extends Migration
             $table->unsignedBigInteger('retur_id');
             $table->unsignedBigInteger('po_id');
 
-            $table->string('metode_pembayaran', 50);
+            $table->string('metode_pembayaran', 50)->nullable();
             $table->decimal('jumlah', 15, 2);
 
-            $table->dateTime('tanggal_pembayaran');
+            $table->dateTime('tanggal_pembayaran')->nullable();
             $table->string('bukti_pembayaran')->nullable();
 
             $table->string('status', 30)->default('Pending');

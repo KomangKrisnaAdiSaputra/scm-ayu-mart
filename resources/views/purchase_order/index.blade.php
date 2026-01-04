@@ -232,7 +232,12 @@
 
             if (!selected || !selected.dataset.photo) return;
 
-            previewPhoto.src = selected.dataset.photo;
+            if (selected.dataset.photo != "null") {
+                previewPhoto.src = selected.dataset.photo;
+                previewPhoto.classList.remove('d-none');
+            } else {
+                previewPhoto.classList.add('d-none');
+            }
             previewDescription.innerText = selected.dataset.description || '';
 
             previewWrapper.classList.remove('d-none');
@@ -359,7 +364,6 @@
                     const po = JSON.parse(this.dataset.po);
 
                     const paymentLists = JSON.parse(this.dataset.paymentLists);
-                    console.log(invoice, po, paymentLists);
 
                     const metodeSelect = document.getElementById('metode_bayar');
 
@@ -382,7 +386,7 @@
                         const option = document.createElement('option');
                         option.value = item.name;
                         option.textContent = item.name;
-                        option.dataset.photo = '/' + item.photo;
+                        option.dataset.photo = item.photo ? '/' + item.photo : null;
                         option.dataset.description = item.description ?? '';
                         metodeSelect.appendChild(option);
                     }
