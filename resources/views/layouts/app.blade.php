@@ -219,6 +219,19 @@
                             </li>
                         </ul>
                     @endif
+
+                    @if (in_array(auth()->user()->role, ['Manajer', 'Supplier']))
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Payment List' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('paymentlist') }}">
+                                    <i class="fas fa-fire"></i>
+                                    <span>Payment List</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
                 </aside>
             </div>
 

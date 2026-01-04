@@ -13,6 +13,7 @@ use App\Http\Controllers\Supplier\SupplierPOController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentListController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
 use App\Http\Controllers\PengirimanController;
@@ -97,6 +98,12 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('store', 'store')->name('.store');
         Route::get('create', 'create')->name('.create');
+        Route::get('/', 'index');
+    });
+
+    Route::middleware(['role:Manajer|Supplier'])->prefix('payment-list')->name('paymentlist')->controller(PaymentListController::class)->group(function () {
+        Route::post('save', 'save')->name('.save');
+        Route::get('form/{id?}', 'form')->name('.form');
         Route::get('/', 'index');
     });
 });
