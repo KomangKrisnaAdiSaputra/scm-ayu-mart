@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DetailPurchaseOrder;
+use App\Models\PaymentList;
 use App\Models\Produk;
 use App\Models\PurchaseOrder;
 use App\Models\StokGudang;
@@ -29,7 +30,8 @@ class PurchaseOrderController extends Controller
             ->orderBy('tanggal_po', 'desc')
             ->get();
 
-        return view('purchase_order.index', compact('po', 'search'));
+        $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Supplier")->get();
+        return view('purchase_order.index', compact('po', 'search', 'paymentLists'));
     }
 
     public function create()

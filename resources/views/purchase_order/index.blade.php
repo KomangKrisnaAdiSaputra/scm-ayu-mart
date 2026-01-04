@@ -171,7 +171,8 @@
                                                     data-role='@json(auth()->user()->role)'
                                                     data-invoice='@json($item->invoice)'
                                                     data-po='@json($item)'
-                                                    data-invoice-payment='@json($item->invoice->payment)'>
+                                                    data-invoice-payment='@json($item->invoice->payment)'
+                                                    data-payment-lists='@json($paymentLists)'>
                                                     Invoice
                                                 </button>
                                             @endif
@@ -215,6 +216,28 @@
 
 @section('js')
     <script>
+        const metodeSelect = document.getElementById('metode_bayar');
+        const previewWrapper = document.getElementById('preview_metode_wrapper');
+        const previewPhoto = document.getElementById('preview_metode_photo');
+        const previewDescription = document.getElementById('preview_metode_description');
+
+        metodeSelect.addEventListener('change', function() {
+
+            const selected = this.selectedOptions[0];
+
+            // RESET
+            previewWrapper.classList.add('d-none');
+            previewPhoto.src = '';
+            previewDescription.innerText = '';
+
+            if (!selected || !selected.dataset.photo) return;
+
+            previewPhoto.src = selected.dataset.photo;
+            previewDescription.innerText = selected.dataset.description || '';
+
+            previewWrapper.classList.remove('d-none');
+        });
+
         window.routes = {
             invoicePayment: "{{ route('invoice.payment', ':id') }}",
             invoiceReject: "{{ route('invoice.reject', ':id') }}",
@@ -334,6 +357,35 @@
                         null;
                     const role = this.dataset.role.replace(/"/g, '');
                     const po = JSON.parse(this.dataset.po);
+
+                    const paymentLists = JSON.parse(this.dataset.paymentLists);
+                    console.log(invoice, po, paymentLists);
+
+                    const metodeSelect = document.getElementById('metode_bayar');
+
+                    previewWrapper.classList.add('d-none');
+                    previewPhoto.src = '';
+                    previewDescription.innerText = '';
+
+
+                    /* RESET OPTION */
+                    metodeSelect.innerHTML = '<option value="">Pilih Metode</option>';
+
+                    /* FILTER METODE */
+                    paymentLists.forEach(item => {
+                        if (String(item.created_by) === String(po.supplier.users_id)) {
+                            appendMetode(item);
+                        }
+                    });
+
+                    function appendMetode(item) {
+                        const option = document.createElement('option');
+                        option.value = item.name;
+                        option.textContent = item.name;
+                        option.dataset.photo = '/' + item.photo;
+                        option.dataset.description = item.description ?? '';
+                        metodeSelect.appendChild(option);
+                    }
 
                     /* RESET */
                     formBayar.reset();
@@ -486,7 +538,6 @@
             const allowed = rules[role]?.[po.status_po] ?? [];
             // let options = `<option value="" readonly>Select</option>`;
             let options = '';
-            console.log(po, role, allowed);
 
             allowed.forEach(status => {
                 options += `<option value="${status}">${status}</option>`;
@@ -639,12 +690,21 @@
 
                     <div class="form-group">
                         <label>Metode</label>
-                        <select name="metode_bayar" class="form-control">
+                        <select name="metode_bayar" id="metode_bayar" class="form-control">
                             <option value="">Pilih</option>
                             <option>Transfer Bank</option>
                             <option>Cash</option>
                             <option>QRIS</option>
                         </select>
+
+                        <div id="preview_metode_wrapper" class="mt-3 d-none">
+                            <div class="text-center">
+                                <img id="preview_metode_photo" src="" alt="Metode"
+                                    style="max-width:200px;max-height:200px;object-fit:contain;" class="mb-2 rounded">
+                            </div>
+
+                            <div class="text-muted text-center" id="preview_metode_description"></div>
+                        </div>
                     </div>
 
                     <div id="bukti_preview_wrapper" class="mb-2 d-none">
