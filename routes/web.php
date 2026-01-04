@@ -80,23 +80,23 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
-        Route::post('/create/{poId}', 'createFromPo');
-        Route::post('/payment/{invoiceId}', 'savePayment');
-        Route::post('/reject/{invoiceId}', 'reject');
+        Route::post('/create/{poId}', 'createFromPo')->name('.create');
+        Route::post('/payment/{invoiceId}', 'savePayment')->name('.payment');
+        Route::post('/reject/{invoiceId}', 'reject')->name('.reject');
     });
 
     Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
-        Route::post('/{id}/tolak', 'tolak')->name('.tolak');
-        // Route::post('/{id}/terima', 'terima')->name('.terima');
+        Route::post('{id}/tolak', 'tolak')->name('.tolak');
+        Route::post('{id}/terima', 'terimaRetur')->name('.terima');
 
-        Route::post('{id}/terima', 'terimaRetur');
         Route::post('payment', 'storeReturPayment')->name('.store.payment');
-        Route::post('payment/{id}/bayar', 'bayar');
-        Route::post('{id}/kirim',  'kirimBarang');
-        Route::post('{id}/selesai', 'selesai');
+        Route::post('payment/bayar', 'bayar')->name('.pay.payment');
+
+        Route::post('{id}/kirim', 'kirimBarang')->name('.kirim');
+        Route::post('{id}/selesai', 'selesai')->name('.selesai');
 
         Route::post('store', 'store')->name('.store');
         Route::get('create', 'create')->name('.create');
-        Route::get('/', 'index')->name('');
+        Route::get('/', 'index');
     });
 });

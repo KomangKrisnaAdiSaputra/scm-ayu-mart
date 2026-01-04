@@ -66,7 +66,7 @@
                                     <td class="text-nowrap">
                                         {{-- DETAIL --}}
                                         <button class="btn btn-info btn-sm"
-                                            onclick='openDetailRetur(@json($retur))' data-toggle="modal"
+                                            onclick='openDetailRetur(@json($item))' data-toggle="modal"
                                             data-target="#modalDetailRetur">
                                             Detail
                                         </button>
@@ -104,7 +104,7 @@
                                             </form>
                                         @endif
 
-                                        @if (auth()->user()->role === 'Manajer' && $item->payment === 1)
+                                        @if (auth()->user()->role === 'Manajer' && $item->payment === 1 && !($item?->tb_payment ?? null))
                                             <button class="btn btn-primary btn-sm"
                                                 onclick="
     $('#rp_retur_id').val({{ $item->retur_id }});
@@ -116,12 +116,14 @@
                                         @endif
 
                                         @if (auth()->user()->role === 'Supplier' && $item?->tb_payment?->status === 'Menunggu Pembayaran')
-                                            <form action="{{ url('/retur-payment/' . $item->payment->id . '/bayar') }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-success btn-sm">Bayar Refund</button>
-                                            </form>
+                                            <button class="btn btn-success btn-sm btn-bayar-refund"
+                                                data-retur-id="{{ $item->retur_id }}" data-po-id="{{ $item->po_id }}"
+                                                data-jumlah="{{ $item->tb_payment->jumlah }}" data-toggle="modal"
+                                                data-target="#modalBayarRefund">
+                                                Bayar Refund
+                                            </button>
                                         @endif
+
 
                                     </td>
                                 </tr>
@@ -162,8 +164,6 @@
 @section('js')
     <script>
         function openDetailRetur(retur) {
-            console.log(retur);
-
             // RETUR
             $('#r_tanggal').text(retur.tanggal_retur);
             $('#r_qty').text(retur.qty_retur);
@@ -191,6 +191,14 @@
         function openTerimaRetur(returId) {
             $('#formTerimaRetur').attr('action', `/retur/${returId}/terima`);
         }
+
+        document.querySelectorAll('.btn-bayar-refund').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('retur_id').value = this.dataset.returId;
+                document.getElementById('po_id').value = this.dataset.poId;
+                document.getElementById('jumlah').value = this.dataset.jumlah;
+            });
+        });
     </script>
 
 @endsection
@@ -369,5 +377,62 @@
             </form>
 
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBayarRefund" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('retur.pay.payment') }}" enctype="multipart/form-data">
+            @csrf
+
+            <input type="hidden" name="retur_id" id="retur_id">
+            <input type="hidden" name="po_id" id="po_id">
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pembayaran Refund</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label>Metode Pembayaran</label>
+                        <select name="metode_pembayaran" class="form-control" required>
+                            <option value="">-- Pilih Metode --</option>
+                            <option value="Transfer Bank">Transfer Bank</option>
+                            <option value="Cash">Cash</option>
+                            <option value="E-Wallet">E-Wallet</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Jumlah Refund</label>
+                        <input type="number" name="jumlah" id="jumlah" class="form-control" step="0.01"
+                            readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Tanggal Pembayaran</label>
+                        <input type="datetime-local" name="tanggal_pembayaran" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Bukti Pembayaran</label>
+                        <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*">
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Keterangan</label>
+                        <textarea name="keterangan" class="form-control"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary">Bayar Refund</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>

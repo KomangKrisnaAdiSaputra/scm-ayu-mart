@@ -14,7 +14,6 @@ class ReturController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
-
         $retur = Retur::with([
             'produk',
             'purchaseOrder',
@@ -142,10 +141,9 @@ class ReturController extends Controller
 
         $retur = Retur::findOrFail($request->retur_id);
         abort_if($retur->payment !== 1, 400);
-        dd($retur);
 
         ReturPayment::create([
-            'retur_id' => $retur->id,
+            'retur_id' => $retur->retur_id,
             'po_id' => $retur->po_id,
             'jumlah' => $request->jumlah,
             'metode_pembayaran' => $request->metode_pembayaran,
@@ -161,24 +159,59 @@ class ReturController extends Controller
         return back()->with('success', 'Retur payment berhasil dibuat');
     }
 
-    public function bayar($id)
+    public function bayar(Request $request)
     {
-        abort_if(auth()->user()->role !== 'Supplier', 403);
-
-        $payment = ReturPayment::findOrFail($id);
-
-        abort_if($payment->status !== 'Menunggu Pembayaran', 400);
-
-        $payment->update([
-            'status' => 'Dibayar',
-            'tanggal_pembayaran' => now(),
+        $request->validate([
+            'retur_id' => 'required|exists:retur,retur_id',
+            'metode_pembayaran' => 'required',
+            'jumlah' => 'required|numeric',
+            'tanggal_pembayaran' => 'required|date',
+            'bukti_pembayaran' => 'nullable|image|max:2048',
         ]);
 
-        $payment->retur->update([
-            'status_retur' => 'Selesai'
-        ]);
+        DB::beginTransaction();
 
-        return back()->with('success', 'Pengembalian dana berhasil dibayar');
+        try {
+            $payment = ReturPayment::where('retur_id', $request->retur_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($payment->status !== 'Menunggu Pembayaran') {
+                throw new \Exception('Pembayaran sudah diproses');
+            }
+
+            $bukti = $payment->bukti_pembayaran;
+
+            if ($request->hasFile('bukti_pembayaran')) {
+                $file = $request->file('bukti_pembayaran');
+
+                $filename = 'refund_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path('returpayment/refund'), $filename);
+
+                $bukti = 'returpayment/refund/' . $filename;
+            }
+
+            $payment->update([
+                'metode_pembayaran' => $request->metode_pembayaran,
+                'jumlah' => $request->jumlah,
+                'tanggal_pembayaran' => $request->tanggal_pembayaran,
+                'bukti_pembayaran' => $bukti,
+                'keterangan' => $request->keterangan,
+                'status' => 'Sudah Dibayar',
+                'created_by' => auth()->user()->users_id,
+            ]);
+
+            Retur::where('retur_id', $request->retur_id)
+                ->update(['status_retur' => 'Dibayar']);
+
+            DB::commit();
+
+            return back()->with('success', 'Refund berhasil dibayar');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function kirimBarang($id)

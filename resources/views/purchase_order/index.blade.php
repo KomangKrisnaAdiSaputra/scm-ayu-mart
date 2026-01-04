@@ -215,6 +215,13 @@
 
 @section('js')
     <script>
+        window.routes = {
+            invoicePayment: "{{ route('invoice.payment', ':id') }}",
+            invoiceReject: "{{ route('invoice.reject', ':id') }}",
+            invoiceCreate: "{{ route('invoice.create', ':id') }}",
+            poUpdateStatus: "{{ route('purchaseorder.update.status', ':id') }}",
+        };
+
         const rules = {
             Gudang: {
                 'Draft': ['Draft', 'Menunggu Persetujuan'],
@@ -364,7 +371,8 @@
 
                         if (role === 'Manajer') {
                             btnBayar.classList.remove('d-none');
-                            formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
+                            formBayar.action = window.routes.invoicePayment.replace(':id', invoice
+                                .invoice_id);
                         } else {
                             formInputs.forEach(el => el.disabled = true);
                         }
@@ -384,7 +392,8 @@
 
                             if (role === 'Manajer') {
                                 btnBayar.classList.remove('d-none');
-                                formBayar.action = `/invoice/payment/${invoice.invoice_id}`;
+                                formBayar.action = window.routes.invoicePayment.replace(':id',
+                                    invoice.invoice_id);
                             }
                         }
 
@@ -441,7 +450,7 @@
                 document.getElementById('invoice_id_tolak').value = invoiceId;
                 document.getElementById('catatan_supplier_hidden').value = catatanSupplier.value;
 
-                formTolak.action = `/invoice/reject/${invoiceId}`;
+                formTolak.action = window.routes.invoiceReject.replace(':id', invoiceId);
                 formTolak.submit();
             });
 
@@ -456,7 +465,7 @@
                     const poId = this.dataset.poId;
 
                     // Set action form sesuai PO yang dipilih
-                    form.action = `/invoice/create/${poId}`;
+                    form.action = window.routes.invoiceCreate.replace(':id', poId);
 
                     // Tampilkan modal
                     $('#modalBuatInvoice').modal('show');
@@ -470,7 +479,7 @@
 
             $('#formUpdateStatus').attr(
                 'action',
-                `/purchase-order/${po.po_id}/update/status`
+                window.routes.poUpdateStatus.replace(':id', po.po_id)
             );
 
             // status dropdown
