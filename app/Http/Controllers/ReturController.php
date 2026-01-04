@@ -397,34 +397,34 @@ class ReturController extends Controller
     // }
 
 
-    // public function tolak($id)
-    // {
-    //     DB::beginTransaction();
+    public function tolak($id)
+    {
+        DB::beginTransaction();
 
-    //     try {
-    //         $retur = Retur::with('purchaseOrder')
-    //             ->lockForUpdate()
-    //             ->findOrFail($id);
+        try {
+            $retur = Retur::with('purchaseOrder')
+                ->lockForUpdate()
+                ->findOrFail($id);
 
-    //         if ($retur->status_retur !== 'Menunggu Konfirmasi') {
-    //             throw new \Exception('Retur sudah diproses');
-    //         }
+            if ($retur->status_retur !== 'Menunggu Konfirmasi') {
+                throw new \Exception('Retur sudah diproses');
+            }
 
-    //         $retur->update([
-    //             'status_retur' => 'Ditolak'
-    //         ]);
+            $retur->update([
+                'status_retur' => 'Ditolak'
+            ]);
 
-    //         // PO kembali ke kondisi sebelumnya
-    //         $retur->purchaseOrder->update([
-    //             'status_po' => 'Dikirim Supplier'
-    //         ]);
+            // PO kembali ke kondisi sebelumnya
+            $retur->purchaseOrder->update([
+                'status_po' => 'Dikirim Supplier'
+            ]);
 
-    //         DB::commit();
+            DB::commit();
 
-    //         return back()->with('success', 'Retur ditolak');
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return back()->with('error', $e->getMessage());
-    //     }
-    // }
+            return back()->with('success', 'Retur ditolak');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
+    }
 }

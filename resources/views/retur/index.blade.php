@@ -83,8 +83,8 @@
                                                 Terima
                                             </button>
 
-                                            <form action="{{ url('/retur/' . $item->retur_id . '/tolak') }}" method="POST"
-                                                class="d-inline">
+                                            <form action="{{ route('retur.tolak', ['id' => $item->retur_id]) }}"
+                                                method="POST" class="d-inline">
                                                 @csrf
                                                 <button class="btn btn-danger btn-sm">Tolak</button>
                                             </form>
