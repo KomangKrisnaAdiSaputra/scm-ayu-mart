@@ -132,6 +132,14 @@
                                             Detail
                                         </button>
 
+                                        @if (in_array(auth()->user()->role, ['Cabang']))
+                                            <button class="btn btn-sm btn-warning btn-edit-stok"
+                                                data-stokcabang='@json($stokCabang)'
+                                                data-namaproduk="{{ $item->nama_produk }}">
+                                                Edit
+                                            </button>
+                                        @endif
+
                                         @if ($roleManajer)
                                             <a href="{{ route('produk.form', ['id' => $item->id_produk]) }}"
                                                 class="btn btn-secondary btn-sm mr-1">
@@ -179,6 +187,10 @@
 
 @section('js')
     <script>
+        window.routes = {
+            stokCabang: "{{ route('produk.stokcabang', ':id') }}",
+        };
+
         function confirmDelete() {
             if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
                 return false;
@@ -272,6 +284,24 @@
                 list.append('<li>- Tidak ada data stok cabang -</li>')
             }
         })
+
+        $(document).on('click', '.btn-edit-stok', function() {
+            const stokCabang = JSON.parse($(this).attr('data-stokcabang'));
+            const namaProduk = $(this).attr('data-namaproduk');
+
+            $('#stok_minimum').val(stokCabang.stok_minimum);
+
+            $('#editStokTitle').text(
+                'Edit Stok Minimum - ' + namaProduk
+            );
+
+            $('#editStokForm').attr(
+                'action',
+                window.routes.stokCabang.replace(':id', stokCabang.id_stok_cabang)
+            );
+
+            $('#detailModal').modal('show');
+        });
     </script>
 
 @endsection
@@ -379,5 +409,37 @@
             </div>
 
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form method="POST" id="editStokForm">
+            @csrf
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editStokTitle">
+                        Edit Stok Minimum
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Stok Minimum</label>
+                        <input type="number" name="stok_minimum" id="stok_minimum" class="form-control"
+                            min="0" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button class="btn btn-primary" type="submit">Simpan</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>

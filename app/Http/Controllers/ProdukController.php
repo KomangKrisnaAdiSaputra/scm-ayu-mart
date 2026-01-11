@@ -128,4 +128,19 @@ class ProdukController extends Controller
 
         return redirect()->route('produk')->with('success', 'Produk berhasil dihapus');
     }
+
+    public function saveStokCabang(Request $request, $id)
+    {
+        $request->validate([
+            'stok_minimum' => 'required|integer|min:0'
+        ]);
+
+        TbStokCabang::find($id)
+            ->update([
+                'stok_minimum' => $request->stok_minimum,
+                'updated_at' => now()
+            ]);
+
+        return back()->with('success', 'Stok minimum berhasil diperbarui');
+    }
 }

@@ -45,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:Manajer|Gudang|Cabang'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
+        Route::post('/stok/cabang/{id}', 'saveStokCabang')->name('.stokcabang');
         Route::delete('/produk/{id}', 'delete')->name('.delete');
         Route::get('/', 'index');
     });
