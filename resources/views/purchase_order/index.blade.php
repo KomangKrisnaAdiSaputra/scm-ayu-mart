@@ -268,6 +268,7 @@
         $('.btn-detail').on('click', function() {
             const po = $(this).data('po');
             const role = "{{ auth()->user()->role }}";
+            const allProduk = @json($allProduk);
 
             $('#po_id').val(po.po_id);
 
@@ -284,13 +285,14 @@
             let total = 0;
 
             po.detail.forEach((item, i) => {
+                const produk = allProduk.find(a => a.id_produk == item.produk_id);
                 const subtotal = item.qty * item.harga;
                 total += subtotal;
 
                 html += `
             <tr>
                 <td>${i + 1}</td>
-                <td>${item.produk.nama_produk}</td>
+                <td>${produk.nama_produk}</td>
                 <td>${item.qty}</td>
                 <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
                 <td>Rp ${subtotal.toLocaleString('id-ID')}</td>

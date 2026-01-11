@@ -15,9 +15,4 @@ class DetailPurchaseOrder extends Model
         'qty',
         'harga'
     ];
-
-    public function produk()
-    {
-        return $this->belongsTo(Produk::class, 'produk_id');
-    }
 }

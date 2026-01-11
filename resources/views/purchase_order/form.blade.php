@@ -56,12 +56,12 @@
                                     @forelse ($details as $i => $d)
                                         <tr>
                                             <td>
-                                                <select name="produk[{{ $i }}][produk_id]"
+                                                <select name="produk[{{ $i }}][id_produk]"
                                                     class="form-control produk-select" required>
                                                     @foreach ($produk as $p)
-                                                        <option value="{{ $p->produk_id }}"
+                                                        <option value="{{ $p->id_produk }}"
                                                             data-harga="{{ $p->harga_beli }}"
-                                                            {{ $d->produk_id == $p->produk_id ? 'selected' : '' }}>
+                                                            {{ $d->id_produk == $p->id_produk ? 'selected' : '' }}>
                                                             {{ $p->nama_produk }}
                                                         </option>
                                                     @endforeach
@@ -91,11 +91,11 @@
                                     @empty
                                         <tr>
                                             <td>
-                                                <select name="produk[0][produk_id]" class="form-control produk-select"
+                                                <select name="produk[0][id_produk]" class="form-control produk-select"
                                                     required>
                                                     <option value="">-- Pilih Produk --</option>
                                                     @foreach ($produk as $p)
-                                                        <option value="{{ $p->produk_id }}"
+                                                        <option value="{{ $p->id_produk }}"
                                                             data-harga="{{ $p->harga_beli }}">
                                                             {{ $p->nama_produk }}
                                                         </option>
@@ -152,10 +152,10 @@
             let row = `
     <tr>
         <td>
-            <select name="produk[${index}][produk_id]" class="form-control produk-select" required>
+            <select name="produk[${index}][id_produk]" class="form-control produk-select" required>
                 <option value="">-- Pilih Produk --</option>
                 @foreach ($produk as $p)
-                    <option value="{{ $p->produk_id }}" data-harga="{{ $p->harga_beli }}">
+                    <option value="{{ $p->id_produk }}" data-harga="{{ $p->harga_beli }}">
                         {{ $p->nama_produk }}
                     </option>
                 @endforeach

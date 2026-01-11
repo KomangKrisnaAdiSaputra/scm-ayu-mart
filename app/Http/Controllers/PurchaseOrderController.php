@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DetailPurchaseOrder;
+use App\Models\Integrasi\TbProduk;
 use App\Models\PaymentList;
 use App\Models\Produk;
 use App\Models\PurchaseOrder;
@@ -18,7 +19,7 @@ class PurchaseOrderController extends Controller
     {
         $search = $request->search;
 
-        $po = PurchaseOrder::with(['supplier', 'detail', 'detail.produk'])
+        $po = PurchaseOrder::with(['supplier', 'detail', 'detail'])
             ->byRole(auth()->user()->role)
             ->when($search, function ($q) use ($search) {
                 $q->where('po_id', 'like', "%$search%")
@@ -30,8 +31,10 @@ class PurchaseOrderController extends Controller
             ->orderBy('tanggal_po', 'desc')
             ->get();
 
+        $allProduk = TbProduk::all();
+
         $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Supplier")->get();
-        return view('purchase_order.index', compact('po', 'search', 'paymentLists'));
+        return view('purchase_order.index', compact('po', 'search', 'paymentLists', 'allProduk'));
     }
 
     public function create()
@@ -39,7 +42,7 @@ class PurchaseOrderController extends Controller
         return view('purchase_order.form', [
             'po' => null,
             'supplier' => Supplier::all(),
-            'produk' => Produk::where('status_produk', 'aktif')->get(),
+            'produk' => TbProduk::where('status_produk', 'aktif')->get(),
             'details' => []
         ]);
     }
@@ -53,7 +56,7 @@ class PurchaseOrderController extends Controller
         return view('purchase_order.form', [
             'po' => $po,
             'supplier' => Supplier::all(),
-            'produk' => Produk::where('status_produk', 'aktif')->get(),
+            'produk' => TbProduk::where('status_produk', 'aktif')->get(),
             'details' => $po->detail
         ]);
     }
@@ -63,7 +66,7 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'supplier_id' => 'required',
             'produk' => 'required|array|min:1',
-            'produk.*.produk_id' => 'required',
+            'produk.*.id_produk' => 'required',
             'produk.*.qty' => 'required|numeric|min:1',
             'produk.*.harga' => 'required|numeric|min:0',
         ]);
@@ -71,7 +74,6 @@ class PurchaseOrderController extends Controller
         DB::beginTransaction();
 
         try {
-
             $produkMerged = $this->mergeProduk($request->produk);
 
             $total = 0;
@@ -108,7 +110,7 @@ class PurchaseOrderController extends Controller
             foreach ($produkMerged as $item) {
                 DetailPurchaseOrder::create([
                     'po_id' => $po->po_id,
-                    'produk_id' => $item['produk_id'],
+                    'produk_id' => $item['id_produk'],
                     'qty' => $item['qty'],
                     'harga' => $item['harga'],
                 ]);
@@ -129,7 +131,7 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'supplier_id' => 'required',
             'produk' => 'required|array|min:1',
-            'produk.*.produk_id' => 'required',
+            'produk.*.id_produk' => 'required',
             'produk.*.qty' => 'required|numeric|min:1',
             'produk.*.harga' => 'required|numeric|min:0',
         ]);
@@ -150,7 +152,7 @@ class PurchaseOrderController extends Controller
 
                 DetailPurchaseOrder::create([
                     'po_id' => $po->po_id,
-                    'produk_id' => $item['produk_id'],
+                    'id_produk' => $item['id_produk'],
                     'qty' => $item['qty'],
                     'harga' => $item['harga'],
                 ]);
@@ -212,7 +214,7 @@ class PurchaseOrderController extends Controller
 
         if ($newStatus == "Selesai") {
             foreach ($po->detail as $item) {
-                StokGudang::where('produk_id', $item->produk_id)
+                StokGudang::where('id_produk', $item->id_produk)
                     ->increment('stok_total', $item->qty);
             }
         }
@@ -228,11 +230,11 @@ class PurchaseOrderController extends Controller
         $merged = [];
 
         foreach ($produk as $item) {
-            $id = $item['produk_id'];
+            $id = $item['id_produk'];
 
             if (!isset($merged[$id])) {
                 $merged[$id] = [
-                    'produk_id' => $id,
+                    'id_produk' => $id,
                     'qty' => (int) $item['qty'],
                     'harga' => (int) $item['harga'],
                 ];
