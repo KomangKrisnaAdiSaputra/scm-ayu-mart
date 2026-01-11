@@ -19,4 +19,9 @@ class TbStokCabang extends Model
         'total_stok',
         'stok_minimum',
     ];
+
+    function cabang()
+    {
+        return $this->belongsTo(TbCabang::class, 'id_cabang');
+    }
 }

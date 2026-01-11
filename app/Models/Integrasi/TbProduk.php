@@ -34,4 +34,9 @@ class TbProduk extends Model
     {
         return $this->hasOne(TbJenis::class, 'id_jenis', 'id_jenis');
     }
+
+    function stok_cabangs()
+    {
+        return $this->hasMany(TbStokCabang::class, 'id_produk', 'id_produk');
+    }
 }

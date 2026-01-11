@@ -42,7 +42,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware(['role:Manajer|Gudang'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Cabang'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::delete('/produk/{id}', 'delete')->name('.delete');

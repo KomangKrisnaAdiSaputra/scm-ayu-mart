@@ -58,13 +58,16 @@
                                 @else
                                     <th>Harga</th>
                                 @endif
-                                @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                                @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Cabang']))
                                     <th>Stok</th>
                                 @endif
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                             @foreach ($produk as $key => $item)
+                                @php
+                                    $stokGudang = $stok[$item->id_produk] ?? null;
+                                @endphp
                                 <tr>
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $item->kode_produk }}</td>
@@ -77,8 +80,29 @@
                                     @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
                                         <td>
                                             @php
-                                                $stokTotal = $stok[$item->id_produk]->stok_total ?? 0;
-                                                $stokMinimum = $stok[$item->id_produk]->stok_minimum ?? 0;
+                                                $stokTotal = $stokGudang?->stok_total ?? 0;
+                                                $stokMinimum = $stokGudang?->stok_minimum ?? 0;
+                                            @endphp
+
+                                            @if ($stokTotal < $stokMinimum)
+                                                <div class="text-danger font-weight-bold">
+                                                    🔴 {{ $stokTotal }} / {{ $stokMinimum }}
+                                                </div>
+                                                <small class="text-danger">
+                                                    Stok menipis
+                                                </small>
+                                            @else
+                                                <div class="text-success font-weight-bold">
+                                                    🟢 {{ $stokTotal }}
+                                                </div>
+                                            @endif
+                                        </td>
+                                    @elseif (in_array(auth()->user()->role, ['Cabang']))
+                                        <td>
+                                            @php
+                                                $stokCabang = $item?->stok_cabangs->first() ?? null;
+                                                $stokTotal = $stokCabang?->total_stok ?? 0;
+                                                $stokMinimum = $stokCabang?->stok_minimum ?? 0;
                                             @endphp
 
                                             @if ($stokTotal < $stokMinimum)
@@ -102,17 +126,11 @@
                                             {{ $item->status_produk }}</div>
                                     </td>
                                     <td class="text-nowrap">
-                                        <button class="btn btn-info btn-sm mr-1" data-toggle="modal"
-                                            data-target="#modalDetailProduk" data-kode="{{ $item->kode_produk }}"
-                                            data-nama="{{ $item->nama_produk }}"
-                                            data-kategori="{{ $item->jenis?->nama_jenis }}"
-                                            data-satuan="{{ $item->satuan }}" data-harga-beli="{{ $item->harga_beli }}"
-                                            data-harga-jual="{{ $item->harga_produk }}"
-                                            data-status="{{ $item->status_produk }}" data-stok-total="{{ $stokTotal }}"
-                                            data-stok-minimum="{{ $stokMinimum }}">
+                                        <button class="btn btn-info btn-sm" data-toggle="modal"
+                                            data-target="#modalDetailProduk" data-produk='@json($item)'
+                                            data-stok-gudang='@json($stokGudang)'>
                                             Detail
                                         </button>
-
 
                                         @if ($roleManajer)
                                             <a href="{{ route('produk.form', ['id' => $item->id_produk]) }}"
@@ -170,43 +188,88 @@
         }
 
         $('#modalDetailProduk').on('show.bs.modal', function(event) {
-            let b = $(event.relatedTarget)
+            const button = $(event.relatedTarget)
+            const produk = button.data('produk')
+            const stokGudang = button.data('stok-gudang')
 
-            let kode = b.data('kode')
-            let nama = b.data('nama')
-            let kategori = b.data('kategori')
-            let satuan = b.data('satuan')
-            let hargaBeli = b.data('harga-beli')
-            let hargaJual = b.data('harga-jual')
-            let status = b.data('status')
+            /* ===== PRODUK ===== */
+            $('#d_kode').text(produk.kode_produk ?? '-')
+            $('#d_nama').text(produk.nama_produk ?? '-')
+            $('#d_kategori').text(produk.jenis?.nama_jenis ?? '-')
+            $('#d_satuan').text(produk.satuan ?? '-')
+            $('#d_berat').text(produk.berat_produk ? produk.berat_produk + ' Kg' : '-')
+            $('#d_deskripsi').text(produk.deskripsi_produk ?? '-')
 
-            let stokTotal = b.data('stok-total')
-            let stokMinimum = b.data('stok-minimum')
+            /* ===== HARGA ===== */
+            $('#d_harga_beli').text(
+                'Rp ' + Number(produk.harga_beli ?? 0).toLocaleString('id-ID')
+            )
+            $('#d_harga_jual').text(
+                'Rp ' + Number(produk.harga_produk ?? 0).toLocaleString('id-ID')
+            )
 
-            $('#d_kode').text(kode)
-            $('#d_nama').text(nama)
-            $('#d_kategori').text(kategori)
-            $('#d_satuan').text(satuan)
-
-            $('#d_harga_beli').text('Rp ' + Number(hargaBeli).toLocaleString('id-ID'))
-            $('#d_harga_produk').text('Rp ' + Number(hargaJual).toLocaleString('id-ID'))
-
-            // Status badge
-            let badge = $('#d_status')
-            badge
-                .text(status)
-                .removeClass('badge-success badge-danger')
-                .addClass(status === 'aktif' ? 'badge-success' : 'badge-danger')
-
-            // Stok
-            $('#d_stok_total').text(stokTotal)
-            $('#d_stok_minimum').text(stokMinimum)
-
-            // Warning jika stok di bawah minimum
-            if (stokTotal <= stokMinimum) {
-                $('#d_stok_total').addClass('text-danger font-weight-bold')
+            /* ===== DISKON ===== */
+            if (produk.is_diskon_active && produk.harga_diskon) {
+                $('#row_diskon').removeClass('d-none')
+                $('#d_diskon').html(`
+            Rp ${Number(produk.harga_diskon).toLocaleString('id-ID')}
+            <br>
+            <small class="text-muted">
+                ${produk.tanggal_mulai_diskon} s/d ${produk.tanggal_akhir_diskon}
+            </small>
+        `)
             } else {
-                $('#d_stok_total').removeClass('text-danger font-weight-bold')
+                $('#row_diskon').addClass('d-none')
+            }
+
+            /* ===== STATUS ===== */
+            $('#d_status')
+                .text(produk.status_produk)
+                .removeClass('badge-success badge-danger')
+                .addClass(produk.status_produk === 'aktif' ?
+                    'badge-success' :
+                    'badge-danger')
+
+            /* ===== STOK GUDANG ===== */
+            if (stokGudang) {
+                const total = Number(stokGudang.stok_total ?? 0)
+                const minimum = Number(stokGudang.stok_minimum ?? 0)
+
+                if (total < minimum) {
+                    $('#d_stok_gudang').html(
+                        `<span class="text-danger font-weight-bold">
+                    🔴 ${total} / ${minimum}
+                </span>`
+                    )
+                    $('#d_stok_warning')
+                        .text('Stok menipis')
+                        .addClass('text-danger')
+                } else {
+                    $('#d_stok_gudang').html(
+                        `<span class="text-success font-weight-bold">
+                    🟢 ${total}
+                </span>`
+                    )
+                    $('#d_stok_warning').text('').removeClass('text-danger')
+                }
+            }
+
+            /* ===== STOK CABANG ===== */
+            const list = $('#d_stok_cabang')
+            list.empty()
+
+            if (produk.stok_cabangs && produk.stok_cabangs.length) {
+                produk.stok_cabangs.forEach(stok => {
+                    const danger = stok.total_stok <= stok.stok_minimum
+                    list.append(`
+                <li class="${danger ? 'text-danger font-weight-bold' : ''}">
+                    ${stok.cabang?.nama_cabang ?? 'Cabang'} :
+                    ${stok.total_stok} (Min: ${stok.stok_minimum})
+                </li>
+            `)
+                })
+            } else {
+                list.append('<li>- Tidak ada data stok cabang -</li>')
             }
         })
     </script>
@@ -216,7 +279,7 @@
 
 {{-- Modal Detail Produk --}}
 <div class="modal fade" id="modalDetailProduk" tabindex="-1">
-    <div class="modal-dialog modal-md">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
             <div class="modal-header">
@@ -229,8 +292,9 @@
             <div class="modal-body">
                 <table class="table table-sm table-borderless">
 
+                    {{-- INFORMASI PRODUK --}}
                     <tr>
-                        <th width="40%">Kode Produk</th>
+                        <th width="35%">Kode Produk</th>
                         <td id="d_kode"></td>
                     </tr>
                     <tr>
@@ -245,31 +309,64 @@
                         <th>Satuan</th>
                         <td id="d_satuan"></td>
                     </tr>
-
-                    <tr class="harga-beli">
-                        <th>Harga Beli</th>
-                        <td id="d_harga_beli"></td>
+                    <tr>
+                        <th>Berat</th>
+                        <td id="d_berat"></td>
                     </tr>
                     <tr>
-                        <th>Harga{{ $roleManajer ? ' Jual' : '' }}</th>
-                        <td id="d_harga_produk"></td>
+                        <th>Deskripsi</th>
+                        <td id="d_deskripsi"></td>
                     </tr>
 
+                    {{-- HARGA --}}
+                    <tr class="table-secondary">
+                        <th colspan="2">Harga</th>
+                    </tr>
+                    @if (in_array(auth()->user()->role, ['Manajer']))
+                        <tr>
+                            <th>Harga Beli</th>
+                            <td id="d_harga_beli"></td>
+                        </tr>
+                    @endif
+                    <tr>
+                        <th>{{ in_array(auth()->user()->role, ['Manajer']) ? 'Harga Jual' : 'Harga Produk' }}</th>
+                        <td id="d_harga_jual"></td>
+                    </tr>
+                    <tr id="row_diskon" class="table-warning d-none">
+                        <th>Harga Diskon</th>
+                        <td id="d_diskon"></td>
+                    </tr>
+
+                    {{-- STATUS --}}
                     <tr>
                         <th>Status</th>
                         <td><span id="d_status" class="badge"></span></td>
                     </tr>
 
+                    {{-- STOK GUDANG --}}
+                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                        <tr class="table-secondary">
+                            <th colspan="2">Stok Gudang Pusat</th>
+                        </tr>
+                        <tr>
+                            <th>Total / Minimum</th>
+                            <td id="d_stok_gudang"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <small id="d_stok_warning"></small>
+                            </td>
+                        </tr>
+                    @endif
+
+                    {{-- STOK CABANG --}}
                     <tr class="table-secondary">
-                        <th colspan="2">Informasi Stok</th>
+                        <th colspan="2">Stok Per Cabang</th>
                     </tr>
                     <tr>
-                        <th>Stok Total</th>
-                        <td id="d_stok_total"></td>
-                    </tr>
-                    <tr>
-                        <th>Stok Minimum</th>
-                        <td id="d_stok_minimum"></td>
+                        <td colspan="2">
+                            <ul id="d_stok_cabang" class="mb-0 pl-3"></ul>
+                        </td>
                     </tr>
 
                 </table>

@@ -73,7 +73,7 @@
 
     <div class="row">
 
-        @if (in_array(auth()->user()->role, ['Gudang']))
+        @if (in_array(auth()->user()->role, ['Gudang', 'Cabang']))
             {{-- STOK MENIPIS --}}
             <div class="col-xl-4 col-lg-6 col-md-12 mb-4">
                 <div class="card border-danger shadow h-100">

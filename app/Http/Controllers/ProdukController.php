@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Integrasi\TbCabang;
 use App\Models\Integrasi\TbJenis;
 use App\Models\Integrasi\TbProduk;
+use App\Models\Integrasi\TbStokCabang;
 use App\Models\StokGudang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +15,18 @@ class ProdukController extends Controller
 {
     public function index(Request $request)
     {
+        $cabang = TbCabang::where('users_id', auth()->user()->users_id)->first();
         $search = $request->query('search');
 
-        $produk = TbProduk::with(["jenis"])->when($search, function ($query, $search) {
+        $produk = TbProduk::with(["jenis", "stok_cabangs" => function ($q) use ($cabang) {
+            if ($cabang) $q->where("id_cabang", $cabang->id_cabang);
+        }, "stok_cabangs.cabang"])->when($search, function ($query, $search) {
             $query->where('kode_produk', 'like', "%{$search}%")
                 ->orWhere('nama_produk', 'like', "%{$search}%");
+        })->whereHas("stok_cabangs", function ($q) use ($cabang) {
+            if ($cabang) $q->where("id_cabang", $cabang->id_cabang);
         })->get();
+
         $stok = StokGudang::select(
             'produk_id',
             'stok_total',
