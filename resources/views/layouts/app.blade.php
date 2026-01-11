@@ -101,7 +101,8 @@
                     </li> --}}
                     <li class="dropdown"><a href="#" data-toggle="dropdown"
                             class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-                            <img alt="image" src="../assets/img/avatar/avatar-1.png" class="rounded-circle mr-1">
+                            <img alt="image" src="{{ asset('../assets/image/user.png') }}"
+                                class="rounded-circle mr-1">
                             <div class="d-sm-none d-lg-inline-block">Hi, {{ auth()->user()->nama }}</div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right">
@@ -152,7 +153,7 @@
                             <li
                                 class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('produk') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-boxes"></i>
                                     <span>Manajemen Produk</span>
                                 </a>
                             </li>
@@ -165,7 +166,7 @@
                             <li
                                 class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen User' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('usermanagement') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-users"></i>
                                     <span>Manajemen User</span>
                                 </a>
                             </li>
@@ -178,7 +179,7 @@
                             <li
                                 class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('permintaancabang') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-clipboard-list"></i>
                                     <span>Permintaan Cabang</span>
                                 </a>
                             </li>
@@ -190,7 +191,7 @@
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('pengiriman') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-truck"></i>
                                     <span>Pengiriman</span>
                                 </a>
                             </li>
@@ -203,7 +204,7 @@
                             <li
                                 class="{{ trim($__env->yieldContent('titlePage')) === 'Purchase Order' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('purchaseorder') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-file-invoice"></i>
                                     <span>Purchase Order</span>
                                 </a>
                             </li>
@@ -213,7 +214,7 @@
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li class="{{ trim($__env->yieldContent('titlePage')) === 'Retur' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('retur') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-undo-alt"></i>
                                     <span>Retur</span>
                                 </a>
                             </li>
@@ -226,7 +227,7 @@
                             <li
                                 class="{{ trim($__env->yieldContent('titlePage')) === 'Payment List' ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ route('paymentlist') }}">
-                                    <i class="fas fa-fire"></i>
+                                    <i class="fas fa-credit-card"></i>
                                     <span>Payment List</span>
                                 </a>
                             </li>
