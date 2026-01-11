@@ -207,8 +207,60 @@ class ReturController extends Controller
                 'created_by' => auth()->user()->users_id,
             ]);
 
-            Retur::where('retur_id', $request->retur_id)
-                ->update(['status_retur' => 'Dibayar']);
+            $retur = Retur::findOrFail($request->retur_id);
+            $po = $retur->purchaseOrder;
+
+            $poDetail = $po->detail()
+                ->where('produk_id', $retur->produk_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$poDetail) {
+                throw new \Exception('Detail PO tidak ditemukan');
+            }
+
+            $qtyPo    = $poDetail->qty;
+            $qtyRetur = $retur->qty_retur;
+
+            if ($qtyRetur > $qtyPo) {
+                throw new \Exception('Qty retur melebihi qty PO');
+            }
+
+            /**
+             * 1️⃣ Hitung qty masuk gudang
+             */
+            $qtyMasukGudang = $qtyPo - $qtyRetur;
+
+            /**
+             * 2️⃣ Tambah stok gudang
+             */
+            $stok = StokGudang::where('produk_id', $retur->produk_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$stok) {
+                throw new \Exception('Stok gudang tidak ditemukan');
+            }
+
+            $stok->increment('stok_total', $qtyMasukGudang);
+
+            /**
+             * 3️⃣ Update qty PO detail
+             */
+            $poDetail->update([
+                'qty' => $qtyMasukGudang
+            ]);
+
+            /**
+             * 4️⃣ Hitung ulang TOTAL PO
+             */
+            $totalPoBaru = $po->detail->sum(function ($item) {
+                return $item->qty * $item->harga;
+            });
+
+            $poUpdate['total_po'] = $totalPoBaru;
+
+            $retur->update(['status_retur' => 'Dibayar']);
 
             DB::commit();
 
