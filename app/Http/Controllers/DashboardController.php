@@ -18,7 +18,7 @@ class DashboardController extends Controller
             $ids = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')->limit(5)->get()->pluck("id_produk")->toArray();
         }
 
-        $produkMenipis = $ids ? TbProduk::whereIn("id_produk", $ids)->get() : collect([]);
+        $produkMenipis = ($ids ?? null) ? TbProduk::whereIn("id_produk", $ids)->get() : collect([]);
 
         return view("dashboard", compact("produkMenipis"));
     }

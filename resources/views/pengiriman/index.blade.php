@@ -39,11 +39,14 @@
 
                             <tbody>
                                 @forelse ($pengiriman as $item)
+                                    @php
+                                        $cabang = $allCabang->where('id_cabang', $item->permintaan->cabang_id)->first();
+                                    @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
 
                                         <td>
-                                            {{ $item->permintaan->cabang->nama_cabang ?? '-' }}
+                                            {{ $cabang->nama_cabang ?? '-' }}
                                         </td>
 
                                         <td>
@@ -159,12 +162,16 @@
         $(document).on('click', '.btn-detail', function() {
 
             let data = $(this).data('pengiriman');
+            const allProduk = @json($allProduk);
+            const allCabang = @json($allCabang);
+
+            const cabang = allCabang.find(a => a.id_cabang == data.permintaan.cabang_id);
 
             // Pengiriman
             $('#d_pengiriman_id').text(data.pengiriman_id);
             $('#d_tanggal').text(moment(data.tanggal_kirim).format('DD-MM-YYYY HH:mm'));
             $('#d_status').text(data.status_pengiriman);
-            $('#d_cabang').text(data.permintaan?.cabang?.nama_cabang ?? '-');
+            $('#d_cabang').text(cabang?.nama_cabang ?? '-');
 
             // Permintaan
             $('#d_permintaan_id').text(data.permintaan.permintaan_id);
@@ -193,10 +200,12 @@
             let no = 1;
 
             data.permintaan.detail.forEach(item => {
+                const produk = allProduk.find(a => a.id_produk == item.produk_id);
+
                 html += `
             <tr>
                 <td>${no++}</td>
-                <td>${item.produk.nama_produk}</td>
+                <td>${produk.nama_produk}</td>
                 <td>${item.qty_permintaan}</td>
             </tr>
         `;

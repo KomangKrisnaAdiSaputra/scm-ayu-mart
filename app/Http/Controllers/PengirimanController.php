@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Integrasi\TbCabang;
+use App\Models\Integrasi\TbProduk;
+use App\Models\Integrasi\TbStokCabang;
 use App\Models\Pengiriman;
 use App\Models\StatusKurir;
 use App\Models\StokGudang;
@@ -14,13 +17,16 @@ class PengirimanController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
+        $allCabang = TbCabang::all();
+        $allProduk = TbProduk::all();
+        $cabang = TbCabang::where('nama_cabang', 'like', "%{$search}%")->first();
 
         $query = Pengiriman::with([
-            'permintaan.detail.produk',
-            'permintaan.cabang',
+            'permintaan.detail',
+            'permintaan',
             'status_kurir'
         ])
-            ->when($search, function ($query) use ($search) {
+            ->when($search, function ($query) use ($search, $cabang) {
 
                 $query->where('pengiriman_id', 'like', "%{$search}%")
                     ->orWhere('status_pengiriman', 'like', "%{$search}%")
@@ -29,22 +35,23 @@ class PengirimanController extends Controller
                     // search lewat relasi permintaan
                     ->orWhereHas('permintaan', function ($q) use ($search) {
                         $q->where('permintaan_id', 'like', "%{$search}%");
-                    })
+                    })->orWhereHas('permintaan', fn($q) => $q->where('cabang_id', $cabang->cabang_id));
 
-                    // search nama cabang
-                    ->orWhereHas('permintaan.cabang', function ($q) use ($search) {
-                        $q->where('nama_cabang', 'like', "%{$search}%");
-                    });
-            })
-            ->orderBy('tanggal_kirim', 'desc');
+                // // search nama cabang
+                // ->orWhereHas('permintaan.cabang', function ($q) use ($search) {
+                //     $q->where('nama_cabang', 'like', "%{$search}%");
+                // });
+            })->orderBy('tanggal_kirim', 'desc');
+
         if (auth()->user()->role === 'Cabang') {
-            $query->whereHas('permintaan', function ($q) {
-                $q->where('cabang_id', auth()->user()->cabang->cabang_id);
+            $cabangUser = $allCabang->where('users_id', auth()->user()->users_id)->first();
+            $query->whereHas('permintaan', function ($q) use ($cabangUser) {
+                $q->where('cabang_id', $cabangUser?->id_cabang);
             });
         }
         $pengiriman = $query->get();
 
-        return view('pengiriman.index', compact('pengiriman', 'search'));
+        return view('pengiriman.index', compact('pengiriman', 'search', 'allCabang', 'allProduk'));
     }
 
     public function ambil(Request $request)
@@ -142,6 +149,21 @@ class PengirimanController extends Controller
 
             if ($pengiriman->status_pengiriman !== 'Dikirim') {
                 abort(400, 'Pengiriman belum dalam status Dikirim.');
+            }
+
+            foreach ($pengiriman?->permintaan?->detail ?? [] as $value) {
+                $stokCabang = TbStokCabang::where("id_produk", $value->produk_id)->where("id_cabang", $value->permintaan->cabang_id)->first();
+
+                if ($stokCabang) {
+                    TbStokCabang::find($stokCabang->id_stok_cabang)->increment('total_stok', $value->qty_permintaan);
+                } else {
+                    TbStokCabang::create([
+                        "id_produk" => $value->produk_id,
+                        "id_cabang" => $value->permintaan->cabang_id,
+                        "total_stok" => $value->qty_permintaan,
+                        "stok_minimum" => $value->qty_permintaan
+                    ]);
+                }
             }
 
             // Update status pengiriman
