@@ -41,6 +41,14 @@
                             </select>
                         </div>
 
+                        <div class="form-group">
+                            <label>Catatan</label>
+                            <textarea name="catatan" class="form-control @error('catatan') is-invalid @enderror" rows="3">{{ old('catatan', $po->catatan ?? '') }}</textarea>
+                            @error('catatan')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         {{-- PRODUK --}}
                         <div class="table-responsive">
                             <table class="table table-bordered">

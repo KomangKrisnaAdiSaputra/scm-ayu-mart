@@ -51,6 +51,9 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($po->detail as $i => $item)
+                                        @php
+                                            $produk = $allProduk->where('id_produk', $item->produk_id)->first();
+                                        @endphp
                                         <tr>
                                             <td>
                                                 <input type="checkbox" class="check-retur"
@@ -63,8 +66,8 @@
                                                     value="{{ $item->produk_id }}">
                                             </td>
                                             <td>
-                                                <strong>{{ $item->produk->nama_produk }}</strong><br>
-                                                <small>{{ $item->produk->kode_produk }}</small>
+                                                <strong>{{ $produk->nama_produk }}</strong><br>
+                                                <small>{{ $produk->kode_produk }}</small>
                                             </td>
                                             <td>{{ $item->qty }}</td>
                                             <td>

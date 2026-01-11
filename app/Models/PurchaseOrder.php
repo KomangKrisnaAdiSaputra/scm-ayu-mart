@@ -16,7 +16,8 @@ class PurchaseOrder extends Model
         'total_po',
         'status_po',
         'status_pembayaran',
-        'tanggal_pembayaran'
+        'tanggal_pembayaran',
+        'catatan',
     ];
 
     public function invoice()

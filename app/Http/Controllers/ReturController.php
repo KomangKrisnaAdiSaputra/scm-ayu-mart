@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Integrasi\TbProduk;
 use App\Models\PaymentList;
 use App\Models\PurchaseOrder;
 use App\Models\Retur;
@@ -16,7 +17,6 @@ class ReturController extends Controller
     {
         $search = $request->search;
         $retur = Retur::with([
-            'produk',
             'purchaseOrder',
             'tb_payment'
         ])
@@ -33,10 +33,11 @@ class ReturController extends Controller
             ->orderBy('tanggal_retur', 'desc')
             ->paginate(10)
             ->withQueryString();
+        $allProduk = TbProduk::with(["jenis"])->get();
 
         $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Manajer")->get();
 
-        return view('retur.index', compact('retur', 'paymentLists'));
+        return view('retur.index', compact('retur', 'paymentLists', 'allProduk'));
     }
 
     function create()
@@ -44,8 +45,9 @@ class ReturController extends Controller
         $poList = PurchaseOrder::where('status_po', 'Dikirim Supplier')
             ->orderBy('tanggal_po', 'desc')
             ->get();
+        $allProduk = TbProduk::all();
 
-        return view('retur.create', compact('poList'));
+        return view('retur.create', compact('poList', 'allProduk'));
     }
 
     public function store(Request $request)
@@ -401,7 +403,7 @@ class ReturController extends Controller
     // }
 
 
-    public function tolak($id)
+    public function tolak(Request $request, $id)
     {
         DB::beginTransaction();
 
@@ -415,7 +417,8 @@ class ReturController extends Controller
             }
 
             $retur->update([
-                'status_retur' => 'Ditolak'
+                'status_retur' => 'Ditolak',
+                'catatan' => $request->catatan
             ]);
 
             // PO kembali ke kondisi sebelumnya

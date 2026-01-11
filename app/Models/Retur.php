@@ -20,11 +20,6 @@ class Retur extends Model
         'catatan',
     ];
 
-    public function produk()
-    {
-        return $this->belongsTo(Produk::class, 'produk_id');
-    }
-
     public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class, 'po_id', 'po_id');

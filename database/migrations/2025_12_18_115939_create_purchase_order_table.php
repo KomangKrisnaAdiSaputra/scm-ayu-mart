@@ -30,6 +30,7 @@ return new class extends Migration
             ]);
             $table->enum('status_pembayaran', ['Belum Bayar', 'Sudah Bayar']);
             $table->dateTime('tanggal_pembayaran')->nullable();
+            $table->text('catatan')->nullable();
 
             $table->foreign('supplier_id')->references('supplier_id')->on('supplier');
 

@@ -42,13 +42,16 @@
                             </tr>
 
                             @forelse ($retur as $key => $item)
+                                @php
+                                    $produk = $allProduk->where('id_produk', $item->produk_id)->first();
+                                @endphp
                                 <tr>
                                     <td>{{ $retur->firstItem() + $key }}</td>
                                     <td>{{ $item->purchaseOrder->kode_po ?? '-' }}</td>
                                     <td>
-                                        <strong>{{ $item->produk->nama_produk }}</strong><br>
+                                        <strong>{{ $produk->nama_produk }}</strong><br>
                                         <small class="text-muted">
-                                            {{ $item->produk->kode_produk }}
+                                            {{ $produk->kode_produk }}
                                         </small>
                                     </td>
                                     <td>{{ $item->qty_retur }}</td>
@@ -83,11 +86,10 @@
                                                 Terima
                                             </button>
 
-                                            <form action="{{ route('retur.tolak', ['id' => $item->retur_id]) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-danger btn-sm">Tolak</button>
-                                            </form>
+                                            <button type="button" class="btn btn-danger btn-sm btn-tolak-retur"
+                                                data-id="{{ $item->retur_id }}">
+                                                Tolak
+                                            </button>
                                         @endif
 
                                         {{-- SUPPLIER: KIRIM BARANG --}}
@@ -114,7 +116,7 @@
                                                 <input type="hidden" name="retur_id" value="{{ $item->retur_id }}">
 
                                                 <input type="hidden" name="jumlah"
-                                                    value="{{ $item->produk->harga_beli }}">
+                                                    value="{{ $produk->harga_beli * $item->qty_retur }}">
 
                                                 <button class="btn btn-primary btn-sm">Buat Payment</button>
                                             </form>
@@ -199,6 +201,10 @@
         const previewPhoto = document.getElementById('preview_metode_photo_refund');
         const previewDescription = document.getElementById('preview_metode_description_refund');
 
+        window.routes = {
+            tolakRetur: "{{ route('retur.tolak', ':id') }}",
+        };
+
         metodeSelect.addEventListener('change', function() {
 
             const selected = this.selectedOptions[0];
@@ -221,18 +227,22 @@
         });
 
         function openDetailRetur(retur) {
+            const allProduk = @json($allProduk);
+            const produk = allProduk.find(a => a.id_produk == retur.produk_id);
+
             // RETUR
             $('#r_tanggal').text(retur.tanggal_retur);
             $('#r_qty').text(retur.qty_retur);
             $('#r_status').text(retur.status_retur);
             $('#r_alasan').text(retur.alasan);
+            $('#r_catatan').text(retur.catatan);
 
             // PRODUK
-            $('#p_kode').text(retur.produk.kode_produk);
-            $('#p_nama').text(retur.produk.nama_produk);
-            $('#p_kategori').text(retur.produk.kategori);
-            $('#p_satuan').text(retur.produk.satuan);
-            $('#p_harga').text(formatRupiah(retur.produk.harga_beli));
+            $('#p_kode').text(produk.kode_produk);
+            $('#p_nama').text(produk.nama_produk);
+            $('#p_kategori').text(produk.jenis.nama_jenis);
+            $('#p_satuan').text(produk.satuan);
+            $('#p_harga').text(formatRupiah(produk.harga_beli));
 
             // PO
             $('#po_kode').text(retur.purchase_order.kode_po);
@@ -298,6 +308,17 @@
                 $('#dp_bukti').hide();
             }
         }
+
+        $(document).on('click', '.btn-tolak-retur', function() {
+            const id = $(this).data('id');
+
+            $('#tolakReturForm').attr(
+                'action',
+                window.routes.tolakRetur.replace(':id', id)
+            );
+
+            $('#tolakReturModal').modal('show');
+        });
     </script>
 
 @endsection
@@ -338,6 +359,10 @@
                     <tr>
                         <th>Alasan</th>
                         <td id="r_alasan"></td>
+                    </tr>
+                    <tr>
+                        <th>Catatan</th>
+                        <td id="r_catatan"></td>
                     </tr>
                 </table>
 
@@ -603,5 +628,34 @@
             </div>
 
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="tolakReturModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form method="POST" id="tolakReturForm">
+            @csrf
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tolak Retur</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Catatan Penolakan</label>
+                        <textarea name="catatan" class="form-control" rows="4" placeholder="Tulis alasan penolakan..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button class="btn btn-danger" type="submit">Tolak Retur</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>

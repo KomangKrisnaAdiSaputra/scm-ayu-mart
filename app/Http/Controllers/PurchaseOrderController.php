@@ -105,6 +105,7 @@ class PurchaseOrderController extends Controller
                 'total_po' => $total,
                 'status_po' => auth()->user()->role == 'Manajer' ? 'Disetujui Manajer' : 'Draft',
                 'status_pembayaran' => 'Belum Bayar',
+                'catatan' => $request->catatan
             ]);
 
             foreach ($produkMerged as $item) {
