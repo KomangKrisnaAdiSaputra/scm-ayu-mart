@@ -29,9 +29,4 @@ class User extends Authenticatable
     {
         return $this->hasOne(Supplier::class, 'users_id', 'users_id');
     }
-
-    public function cabang()
-    {
-        return $this->hasOne(Cabang::class, 'users_id', 'users_id');
-    }
 }

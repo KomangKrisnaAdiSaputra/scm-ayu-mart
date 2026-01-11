@@ -53,14 +53,17 @@
                                             {{ $item->is_active == 1 ? 'Aktif' : 'Nonaktif' }}</div>
                                     </td>
                                     <td class="text-nowrap">
+                                        @php
+                                            $cabang = $cabangs->where('users_id', $item->users_id)->first();
+                                        @endphp
                                         <button class="btn btn-info btn-sm" data-toggle="modal"
                                             data-target="#modalDetailUser" data-username="{{ $item->username }}"
                                             data-nama="{{ $item->nama }}" data-email="{{ $item->email }}"
                                             data-role="{{ $item->role }}" data-status="{{ $item->is_active }}"
                                             data-created="{{ $item->created_at }}" {{-- Cabang --}}
-                                            data-nama-cabang="{{ $item->cabang->nama_cabang ?? '' }}"
-                                            data-alamat-cabang="{{ $item->cabang->alamat ?? '' }}"
-                                            data-kontak-cabang="{{ $item->cabang->kontak ?? '' }}" {{-- Supplier --}}
+                                            data-nama-cabang="{{ $cabang->nama_cabang ?? '' }}"
+                                            data-alamat-cabang="{{ $cabang->alamat ?? '' }}"
+                                            data-kontak-cabang="{{ $cabang->kontak ?? '' }}" {{-- Supplier --}}
                                             data-nama-supplier="{{ $item->supplier->nama_supplier ?? '' }}"
                                             data-alamat-supplier="{{ $item->supplier->alamat ?? '' }}"
                                             data-kontak-supplier="{{ $item->supplier->kontak ?? '' }}"

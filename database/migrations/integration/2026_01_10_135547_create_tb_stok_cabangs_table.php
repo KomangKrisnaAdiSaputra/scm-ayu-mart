@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stok_gudang', function (Blueprint $table) {
-            $table->id('stok_id');
-            $table->unsignedBigInteger('produk_id');
-            $table->integer('stok_total');
+        Schema::connection('mysqlIntegration')->create('tb_stok_cabang', function (Blueprint $table) {
+            $table->id('id_stok_cabang');
+            $table->string('id_produk');
+            $table->string('id_cabang');
+            $table->integer('total_stok');
             $table->integer('stok_minimum');
             $table->timestamps();
         });
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('stok_gudang');
+        Schema::connection('mysqlIntegration')->dropIfExists('tb_stok_cabang');
     }
 };

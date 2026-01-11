@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Supplier;
 use App\Models\Cabang;
+use App\Models\Integrasi\TbCabang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,13 +17,15 @@ class UserManagementController extends Controller
     {
         $search = $request->query('search');
 
-        $user = User::with(['supplier', 'cabang'])->when($search, function ($query, $search) {
+        $user = User::with(['supplier'])->when($search, function ($query, $search) {
             $query->where('nama', 'like', "%{$search}%")
                 ->orWhere('username', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('role', 'like', "%{$search}%");
         })->get();
-        return view('user_management.index', compact('user', 'search'));
+
+        $cabangs = TbCabang::whereIn("users_id", $user->pluck("users_id")->toArray())->get();
+        return view('user_management.index', compact('user', 'search', 'cabangs'));
     }
 
     public function form($id = null)
@@ -31,14 +34,14 @@ class UserManagementController extends Controller
         $detail = null;
 
         if ($id) {
-            $user = User::with(['supplier', 'cabang'])->findOrFail($id);
+            $user = User::with(['supplier'])->findOrFail($id);
 
             if ($user->role === 'Supplier') {
                 $detail = $user->supplier;
             }
 
             if ($user->role === 'Cabang') {
-                $detail = $user->cabang;
+                $detail = TbCabang::where("users_id", $user->users_id)->first();
             }
         }
 
@@ -89,7 +92,7 @@ class UserManagementController extends Controller
              * HAPUS RELASI LAMA (jika role berubah)
              */
             Supplier::where('users_id', $user->users_id)->delete();
-            Cabang::where('users_id', $user->users_id)->delete();
+            TbCabang::where('users_id', $user->users_id)->delete();
 
             /**
              * SIMPAN RELASI SESUAI ROLE
@@ -105,7 +108,7 @@ class UserManagementController extends Controller
             }
 
             if ($request->role === 'Cabang') {
-                Cabang::create([
+                TbCabang::create([
                     'users_id'    => $user->users_id,
                     'nama_cabang' => $request->nama_cabang,
                     'alamat'      => $request->alamat,

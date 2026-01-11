@@ -17,7 +17,6 @@ return new class extends Migration
             $table->dateTime('tanggal_permintaan');
             $table->enum('status_permintaan', ['Menunggu', 'Diterima', 'Ditolak']);
 
-            $table->foreign('cabang_id')->references('cabang_id')->on('cabang');
 
             $table->timestamps();
         });

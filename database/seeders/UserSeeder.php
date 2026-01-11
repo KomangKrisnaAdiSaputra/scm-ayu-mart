@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Cabang;
+use App\Models\Integrasi\TbCabang;
 use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use App\Models\User;
@@ -18,6 +19,15 @@ class UserSeeder extends Seeder
             'role' => 'Manajer',
             'nama' => 'Manajer Ayu Mart',
             'email' => 'manajer@ayu.com',
+            'is_active' => 1
+        ]);
+
+        User::create([
+            'username' => 'owner',
+            'password' => Hash::make('123456'),
+            'role' => 'Owner',
+            'nama' => 'Owner Ayu Mart',
+            'email' => 'owner@ayu.com',
             'is_active' => 1
         ]);
 
@@ -39,7 +49,7 @@ class UserSeeder extends Seeder
             'is_active' => 1
         ]);
 
-        Cabang::create([
+        TbCabang::create([
             'users_id'    => $userCabang->users_id,
             'nama_cabang' => 'Cabang 1',
             'alamat'      => 'Alamat Cabang 1',

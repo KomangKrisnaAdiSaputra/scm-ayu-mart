@@ -11,15 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cabang', function (Blueprint $table) {
-            $table->id('cabang_id');
+        Schema::connection('mysqlIntegration')->create('tb_cabang', function (Blueprint $table) {
+            $table->id('id_cabang');
             $table->unsignedBigInteger('users_id');
             $table->string('nama_cabang', 50);
             $table->string('alamat', 100);
             $table->string('kontak', 20);
-
-            $table->foreign('users_id')->references('users_id')->on('users');
-
             $table->timestamps();
         });
     }
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cabang');
+        Schema::connection('mysqlIntegration')->dropIfExists('tb_cabang');
     }
 };

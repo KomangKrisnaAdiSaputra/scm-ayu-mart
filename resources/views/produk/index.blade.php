@@ -69,16 +69,16 @@
                                     <td>{{ $key + 1 }}</td>
                                     <td>{{ $item->kode_produk }}</td>
                                     <td>{{ $item->nama_produk }}</td>
-                                    <td>{{ $item->kategori }} / {{ $item->satuan }}</td>
+                                    <td>{{ $item->jenis?->nama_jenis }} / {{ $item->satuan }}</td>
                                     @if ($roleManajer)
                                         <td>{{ $item->harga_beli }}</td>
                                     @endif
-                                    <td>{{ $item->harga_jual }}</td>
+                                    <td>{{ $item->harga_produk }}</td>
                                     @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
                                         <td>
                                             @php
-                                                $stokTotal = $item->stok->stok_total ?? 0;
-                                                $stokMinimum = $item->stok->stok_minimum ?? 0;
+                                                $stokTotal = $stok[$item->id_produk]->stok_total ?? 0;
+                                                $stokMinimum = $stok[$item->id_produk]->stok_minimum ?? 0;
                                             @endphp
 
                                             @if ($stokTotal < $stokMinimum)
@@ -104,23 +104,23 @@
                                     <td class="text-nowrap">
                                         <button class="btn btn-info btn-sm mr-1" data-toggle="modal"
                                             data-target="#modalDetailProduk" data-kode="{{ $item->kode_produk }}"
-                                            data-nama="{{ $item->nama_produk }}" data-kategori="{{ $item->kategori }}"
+                                            data-nama="{{ $item->nama_produk }}"
+                                            data-kategori="{{ $item->jenis?->nama_jenis }}"
                                             data-satuan="{{ $item->satuan }}" data-harga-beli="{{ $item->harga_beli }}"
-                                            data-harga-jual="{{ $item->harga_jual }}"
-                                            data-status="{{ $item->status_produk }}"
-                                            data-stok-total="{{ $item->stok->stok_total ?? 0 }}"
-                                            data-stok-minimum="{{ $item->stok->stok_minimum ?? 0 }}">
+                                            data-harga-jual="{{ $item->harga_produk }}"
+                                            data-status="{{ $item->status_produk }}" data-stok-total="{{ $stokTotal }}"
+                                            data-stok-minimum="{{ $stokMinimum }}">
                                             Detail
                                         </button>
 
 
                                         @if ($roleManajer)
-                                            <a href="{{ route('produk.form', ['id' => $item->produk_id]) }}"
+                                            <a href="{{ route('produk.form', ['id' => $item->id_produk]) }}"
                                                 class="btn btn-secondary btn-sm mr-1">
                                                 Edit
                                             </a>
 
-                                            <form action="{{ route('produk.delete', $item->produk_id) }}" method="POST"
+                                            <form action="{{ route('produk.delete', $item->id_produk) }}" method="POST"
                                                 class="d-inline" onsubmit="return confirmDelete()">
                                                 @csrf
                                                 @method('DELETE')
@@ -189,7 +189,7 @@
             $('#d_satuan').text(satuan)
 
             $('#d_harga_beli').text('Rp ' + Number(hargaBeli).toLocaleString('id-ID'))
-            $('#d_harga_jual').text('Rp ' + Number(hargaJual).toLocaleString('id-ID'))
+            $('#d_harga_produk').text('Rp ' + Number(hargaJual).toLocaleString('id-ID'))
 
             // Status badge
             let badge = $('#d_status')
@@ -252,7 +252,7 @@
                     </tr>
                     <tr>
                         <th>Harga{{ $roleManajer ? ' Jual' : '' }}</th>
-                        <td id="d_harga_jual"></td>
+                        <td id="d_harga_produk"></td>
                     </tr>
 
                     <tr>
