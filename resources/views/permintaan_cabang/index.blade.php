@@ -53,12 +53,15 @@
 
                             <tbody>
                                 @forelse ($permintaan as $item)
+                                    @php
+                                        $cabang = $allCabang->where('id_cabang', $item->cabang_id)->first();
+                                    @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
 
                                         @if ($isAllAccess)
                                             <td>
-                                                {{ $item->cabang->nama_cabang ?? '-' }}
+                                                {{ $cabang?->nama_cabang ?? '-' }}
                                             </td>
                                         @endif
 
@@ -84,7 +87,7 @@
                                         <td>
                                             <button class="btn btn-sm btn-info btn-detail"
                                                 data-id="{{ $item->permintaan_id }}"
-                                                data-cabang="{{ $item->cabang->nama_cabang ?? '-' }}"
+                                                data-cabang="{{ $cabang?->nama_cabang ?? '-' }}"
                                                 data-tanggal="{{ \Carbon\Carbon::parse($item->tanggal_permintaan)->format('d-m-Y') }}"
                                                 data-status="{{ $item->status_permintaan }}"
                                                 data-detail='@json($item->detail)'>
@@ -150,6 +153,7 @@
     <script>
         document.querySelectorAll('.btn-detail').forEach(button => {
             button.addEventListener('click', function() {
+                const allProduk = @json($allProduk);
 
                 document.getElementById('modal-cabang').innerText = this.dataset.cabang;
                 document.getElementById('modal-tanggal').innerText = this.dataset.tanggal;
@@ -157,13 +161,15 @@
 
                 let detail = JSON.parse(this.dataset.detail);
                 let tbody = document.getElementById('modal-detail-body');
-                tbody.innerHTML = '';
 
+                tbody.innerHTML = '';
                 detail.forEach((item, index) => {
+                    const produk = allProduk.find(a => a.id_produk == item.produk_id);
+
                     tbody.innerHTML += `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${item.produk.nama_produk}</td>
+                        <td>${produk ? produk.nama_produk : '-'}</td>
                         <td>${item.qty_permintaan}</td>
                     </tr>
                 `;

@@ -24,10 +24,4 @@ class DetailPermintaanCabang extends Model
     {
         return $this->belongsTo(PermintaanCabang::class, 'permintaan_id', 'permintaan_id');
     }
-
-    // Relasi ke produk
-    public function produk()
-    {
-        return $this->belongsTo(Produk::class, 'produk_id', 'produk_id');
-    }
 }

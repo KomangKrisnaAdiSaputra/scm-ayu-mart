@@ -36,11 +36,11 @@
                                     <tbody id="produk-wrapper">
                                         <tr>
                                             <td>
-                                                <select name="produk[0][produk_id]" class="form-control"
+                                                <select name="produk[0][id_produk]" class="form-control"
                                                     style="min-width:180px" required>
                                                     <option value="">-- Pilih Produk --</option>
                                                     @foreach ($produk as $item)
-                                                        <option value="{{ $item->produk_id }}">
+                                                        <option value="{{ $item->id_produk }}">
                                                             {{ $item->nama_produk }}
                                                         </option>
                                                     @endforeach
@@ -87,10 +87,10 @@
             let html = `
         <tr>
             <td>
-                <select name="produk[${index}][produk_id]" class="form-control" required>
+                <select name="produk[${index}][id_produk]" class="form-control" required>
                     <option value="">-- Pilih Produk --</option>
                     @foreach ($produk as $item)
-                        <option value="{{ $item->produk_id }}">{{ $item->nama_produk }}</option>
+                        <option value="{{ $item->id_produk }}">{{ $item->nama_produk }}</option>
                     @endforeach
                 </select>
             </td>

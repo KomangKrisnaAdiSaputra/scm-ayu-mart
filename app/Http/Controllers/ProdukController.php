@@ -23,9 +23,11 @@ class ProdukController extends Controller
         }, "stok_cabangs.cabang"])->when($search, function ($query, $search) {
             $query->where('kode_produk', 'like', "%{$search}%")
                 ->orWhere('nama_produk', 'like', "%{$search}%");
-        })->whereHas("stok_cabangs", function ($q) use ($cabang) {
-            if ($cabang) $q->where("id_cabang", $cabang->id_cabang);
-        })->get();
+        })
+            // ->whereHas("stok_cabangs", function ($q) use ($cabang) {
+            //     if ($cabang) $q->where("id_cabang", $cabang->id_cabang);
+            // })
+            ->get();
 
         $stok = StokGudang::select(
             'produk_id',

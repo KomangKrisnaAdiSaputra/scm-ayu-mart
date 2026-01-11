@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\PermintaanCabang;
 use App\Models\DetailPermintaanCabang;
+use App\Models\Integrasi\TbCabang;
+use App\Models\Integrasi\TbProduk;
 use App\Models\Pengiriman;
 use App\Models\Produk;
 use App\Models\StokGudang;
@@ -17,13 +19,16 @@ class PermintaanCabangController extends Controller
     public function index(Request $request)
     {
         $search = $request->search;
+        $cabang = TbCabang::where('users_id', auth()->user()->users_id)->first();
+        $allCabang = TbCabang::all();
+        $allProduk = TbProduk::all();
 
-        $permintaan = PermintaanCabang::with(['detail.produk', 'cabang'])
+        $permintaan = PermintaanCabang::with(['detail'])
             ->when(
                 !in_array(auth()->user()->role, ['Manajer', 'Gudang']),
-                function ($query) {
+                function ($query) use ($cabang) {
                     // 🔒 selain Manajer & gudang → filter cabang
-                    $query->where('cabang_id', auth()->user()?->cabang?->cabang_id ?? null);
+                    $query->where('cabang_id', $cabang?->id_cabang ?? null);
                 }
             )
             ->when($search, function ($query) use ($search) {
@@ -36,38 +41,39 @@ class PermintaanCabangController extends Controller
             ->orderBy('tanggal_permintaan', 'desc')
             ->get();
 
-        return view('permintaan_cabang.index', compact('permintaan', 'search'));
+        return view('permintaan_cabang.index', compact('permintaan', 'search', 'cabang', 'allCabang', 'allProduk'));
     }
 
     function form()
     {
+        $stokGudang = StokGudang::where('stok_total', '>', 0)->get();
         return view('permintaan_cabang.form', [
-            'produk' => Produk::where('status_produk', 'aktif')
-                ->whereHas('stok', fn($q) => $q->where('stok_total', '>', 0))
-                ->get()
+            'produk' => TbProduk::where('status_produk', 'aktif')->whereIn("id_produk", $stokGudang->pluck("produk_id")->toArray())->get()
         ]);
     }
 
     public function store(Request $request)
     {
+        $cabang = TbCabang::where('users_id', auth()->user()->users_id)->first();
+
         $request->validate([
             'produk' => 'required|array',
-            'produk.*.produk_id' => 'required|exists:produk,produk_id',
+            'produk.*.id_produk' => 'required|exists:mysqlIntegration.tb_produk,id_produk',
             'produk.*.qty' => 'required|integer|min:1',
         ]);
 
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $cabang) {
 
             // HEADER
             $permintaan = PermintaanCabang::create([
-                'cabang_id' => auth()->user()->cabang?->cabang_id ?? null,
+                'cabang_id' => $cabang?->id_cabang ?? null,
                 'tanggal_permintaan' => now(),
                 'status_permintaan' => 'Menunggu'
             ]);
 
             $produkGabung = [];
             foreach ($request->produk as $item) {
-                $produk_id = (int)$item['produk_id'];
+                $produk_id = (int)$item['id_produk'];
 
                 if (isset($produkGabung[$produk_id])) {
                     // jika produk sudah ada → tambah qty
