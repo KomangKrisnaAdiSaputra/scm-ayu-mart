@@ -15,6 +15,6 @@ class TbJenis extends Model
 
     protected $fillable = [
         'nama_jenis',
-        'dekripsi_jenis'
+        'deskripsi_jenis'
     ];
 }

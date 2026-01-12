@@ -233,6 +233,19 @@
                             </li>
                         </ul>
                     @endif
+
+                    @if (in_array(auth()->user()->role, ['Manajer']))
+                        <ul class="sidebar-menu">
+                            {{-- <li class="menu-header">Dashboard</li> --}}
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Jenis Produk' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('jenisproduk') }}">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>Jenis Produk</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
                 </aside>
             </div>
 
