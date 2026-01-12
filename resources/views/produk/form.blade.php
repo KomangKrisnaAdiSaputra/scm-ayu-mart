@@ -165,7 +165,7 @@
                             <div class="col-md-6">
                                 <label>Stok Minimum</label>
                                 <input type="number" name="stok_minimum" class="form-control"
-                                    value="{{ old('stok_minimum', $produk->stok->stok_minimum ?? 0) }}">
+                                    value="{{ old('stok_minimum', $stokGudang->stok_minimum ?? 0) }}">
                             </div>
 
                         </div>

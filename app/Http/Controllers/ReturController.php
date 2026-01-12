@@ -324,7 +324,7 @@ class ReturController extends Controller
             /**
              * 1️⃣ Hitung qty masuk gudang
              */
-            $qtyMasukGudang = $qtyPo - $qtyRetur;
+            $qtyMasukGudang = $qtyPo;
 
             /**
              * 2️⃣ Tambah stok gudang

@@ -122,7 +122,7 @@
                                     </tr>
                                 @endforeach
 
-                                @if ($produkMenipis->isEmpty())
+                                @if ($produkGudang->isEmpty())
                                     <tr>
                                         <td colspan="2" class="text-center text-muted py-4">
                                             <i class="fas fa-check-circle text-success"></i>
@@ -186,7 +186,7 @@
                                     </tr>
                                 @endforeach
 
-                                @if ($produkMenipis->isEmpty())
+                                @if ($produkCabang->isEmpty())
                                     <tr>
                                         <td colspan="2" class="text-center text-muted py-4">
                                             <i class="fas fa-check-circle text-success"></i>

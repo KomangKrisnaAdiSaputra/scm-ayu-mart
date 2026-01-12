@@ -42,8 +42,9 @@ class ProdukController extends Controller
     public function form($id = null)
     {
         $produk = $id ? TbProduk::findOrFail($id) : null;
+        $stokGudang = StokGudang::where("produk_id", $id)->first();
         $jenis = TbJenis::all();
-        return view('produk.form', compact('produk', 'jenis'));
+        return view('produk.form', compact('produk', 'jenis', 'stokGudang'));
     }
 
     public function save(Request $request, $id = null)
