@@ -215,7 +215,7 @@ class PurchaseOrderController extends Controller
 
         if ($newStatus == "Selesai") {
             foreach ($po->detail as $item) {
-                StokGudang::where('id_produk', $item->id_produk)
+                StokGudang::where('produk_id', $item->produk_id)
                     ->increment('stok_total', $item->qty);
             }
         }

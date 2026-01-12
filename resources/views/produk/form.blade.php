@@ -110,8 +110,7 @@
                                     <input type="file" name="foto_produk" class="form-control-file">
 
                                     @if (!empty($produk->foto_produk))
-                                        <img src="{{ asset('storage/produk/' . $produk->foto_produk) }}" class="mt-2"
-                                            height="80">
+                                        <img src="{{ $produk->foto_produk }}" class="mt-2" height="80">
                                     @endif
                                 </div>
 

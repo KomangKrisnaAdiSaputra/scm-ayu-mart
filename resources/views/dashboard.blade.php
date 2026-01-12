@@ -96,7 +96,7 @@
                                         $dataStokGudang = $stokGudang->where('produk_id', $item->id_produk)->first();
                                         $totalGudang = $dataStokGudang->stok_total;
                                         $minGudang = $dataStokGudang->stok_minimum;
-                                        $persenGudang = $minGudang > 0 ? ($total / $minGudang) * 100 : 0;
+                                        $persenGudang = $minGudang > 0 ? ($totalGudang / $minGudang) * 100 : 0;
                                     @endphp
                                     <tr>
                                         <td>
@@ -160,7 +160,7 @@
                                         $dataStokCabang = $stokCabang->where('id_produk', $item->id_produk)->first();
                                         $totalCabang = $dataStokCabang->total_stok;
                                         $minCabang = $dataStokCabang->stok_minimum;
-                                        $persenCabang = $minCabang > 0 ? ($total / $minCabang) * 100 : 0;
+                                        $persenCabang = $minCabang > 0 ? ($totalCabang / $minCabang) * 100 : 0;
                                     @endphp
                                     <tr>
                                         <td>

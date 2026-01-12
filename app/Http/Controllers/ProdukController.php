@@ -8,8 +8,10 @@ use App\Models\Integrasi\TbJenis;
 use App\Models\Integrasi\TbProduk;
 use App\Models\Integrasi\TbStokCabang;
 use App\Models\StokGudang;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProdukController extends Controller
 {
@@ -76,32 +78,43 @@ class ProdukController extends Controller
         $validated = $request->validate($rules);
 
         DB::transaction(function () use ($request, $validated, $id) {
+            $produk = TbProduk::find($id);
+            $data = [
+                'id_jenis' => $validated['kategori'],
+                'kode_produk' => $validated['kode_produk'],
+                'nama_produk' => $validated['nama_produk'],
+                'deskripsi_produk' => $validated['deskripsi_produk'] ?? null,
+                'harga_beli' => $validated['harga_beli'],
+                'harga_produk' => $validated['harga_jual'],
+                'is_diskon_active' => $validated['is_diskon_active'] ?? 0,
+                'harga_diskon' => $validated['harga_diskon'] ?? null,
+                'tanggal_mulai_diskon' => $validated['tanggal_mulai_diskon'] ?? null,
+                'tanggal_akhir_diskon' => $validated['tanggal_akhir_diskon'] ?? null,
+                'berat_produk' => $validated['berat_produk'] ?? null,
+                'foto_produk' => $produk->foto_produk,
+                'status_produk' => $validated['status_produk'],
+                'satuan' => $validated['satuan'],
+            ];
 
             // Upload foto
             if ($request->hasFile('foto_produk')) {
-                $validated['foto_produk'] = $request->file('foto_produk')->store('produk', 'public');
-                $validated['foto_produk'] = basename($validated['foto_produk']);
+                if ($produk->foto_produk) {
+                    $imagePublicId = pathinfo(parse_url($produk->foto_produk, PHP_URL_PATH), PATHINFO_FILENAME);
+                    Cloudinary::destroy($imagePublicId);
+                }
+
+                $upload = Cloudinary::upload($request->file('foto_produk')->getRealPath(), [
+                    'folder' => 'produk'
+                ]);
+                $data["foto_produk"] = $upload->getSecurePath();
             }
 
-            $produk = TbProduk::updateOrCreate(
-                ['id_produk' => $id],
-                [
-                    'id_jenis' => $validated['kategori'],
-                    'kode_produk' => $validated['kode_produk'],
-                    'nama_produk' => $validated['nama_produk'],
-                    'deskripsi_produk' => $validated['deskripsi_produk'] ?? null,
-                    'harga_beli' => $validated['harga_beli'],
-                    'harga_produk' => $validated['harga_jual'],
-                    'is_diskon_active' => $validated['is_diskon_active'] ?? 0,
-                    'harga_diskon' => $validated['harga_diskon'] ?? null,
-                    'tanggal_mulai_diskon' => $validated['tanggal_mulai_diskon'] ?? null,
-                    'tanggal_akhir_diskon' => $validated['tanggal_akhir_diskon'] ?? null,
-                    'berat_produk' => $validated['berat_produk'] ?? null,
-                    'foto_produk' => $validated['foto_produk'] ?? ($produk->foto_produk ?? null),
-                    'status_produk' => $validated['status_produk'],
-                    'satuan' => $validated['satuan'],
-                ]
-            );
+            if ($produk) {
+                $produk->update($data);
+            } else {
+                TbProduk::create($data);
+            }
+
 
             if (!$id) {
                 StokGudang::create([
@@ -124,7 +137,12 @@ class ProdukController extends Controller
 
     public function delete($id)
     {
-        TbProduk::where('id_produk', $id)->delete();
+        $produk = TbProduk::where('id_produk', $id);
+        if ($produk->foto_produk) {
+            $imagePublicId = pathinfo(parse_url($produk->foto_produk, PHP_URL_PATH), PATHINFO_FILENAME);
+            Cloudinary::destroy($imagePublicId);
+        }
+        $produk->delete();
 
         return redirect()->route('produk')->with('success', 'Produk berhasil dihapus');
     }
