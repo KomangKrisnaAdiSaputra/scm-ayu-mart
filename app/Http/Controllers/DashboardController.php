@@ -12,14 +12,19 @@ class DashboardController extends Controller
 {
     function index()
     {
+        $produkGudang = collect([]);
+        $stokGudang = collect([]);
+        $produkCabang = collect([]);
+        $stokCabang = collect([]);
+
         if (auth()->user()->role === "Gudang") {
-            $ids = StokGudang::whereColumn('stok_total', '<=', 'stok_minimum')->limit(5)->get()->pluck("produk_id")->toArray();
+            $stokGudang = StokGudang::whereColumn('stok_total', '<=', 'stok_minimum')->limit(5)->get();
+            $produkGudang = TbProduk::whereIn("id_produk", $stokGudang->pluck("produk_id")->toArray())->get();
         } elseif (auth()->user()->role === "Cabang") {
-            $ids = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')->limit(5)->get()->pluck("id_produk")->toArray();
+            $stokCabang = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')->limit(5)->get();
+            $produkGudang = TbProduk::whereIn("id_produk", $stokCabang->pluck("produk_id")->toArray())->get();
         }
 
-        $produkMenipis = ($ids ?? null) ? TbProduk::whereIn("id_produk", $ids)->get() : collect([]);
-
-        return view("dashboard", compact("produkMenipis"));
+        return view("dashboard", compact("produkGudang", "stokGudang", "produkCabang", "stokCabang"));
     }
 }
