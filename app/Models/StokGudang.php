@@ -14,9 +14,4 @@ class StokGudang extends Model
         'stok_total',
         'stok_minimum'
     ];
-
-    public function produk()
-    {
-        return $this->belongsTo(Produk::class, 'produk_id');
-    }
 }
