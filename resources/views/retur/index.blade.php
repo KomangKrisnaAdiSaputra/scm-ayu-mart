@@ -71,94 +71,101 @@
                                     <td>{{ $item->payment ? 'Pengembalian Dana' : 'Pengembalian Barang' }}</td>
 
                                     <td class="text-nowrap">
+
                                         {{-- DETAIL --}}
-                                        <button class="btn btn-info btn-sm"
+                                        <button type="button" class="btn btn-info btn-sm mb-1"
                                             onclick='openDetailRetur(@json($item))' data-toggle="modal"
                                             data-target="#modalDetailRetur">
                                             Detail
                                         </button>
 
-                                        {{-- SUPPLIER: TERIMA --}}
-                                        @if (auth()->user()->role === 'Supplier' && $item->status_retur === 'Menunggu Konfirmasi')
-                                            <button class="btn btn-success btn-sm"
-                                                onclick="openTerimaRetur({{ $item->retur_id }})" data-toggle="modal"
-                                                data-target="#modalTerimaRetur">
-                                                Terima
-                                            </button>
+                                        {{-- ================= SUPPLIER ================= --}}
+                                        @if (auth()->user()->role === 'Supplier')
+                                            {{-- MENUNGGU KONFIRMASI --}}
+                                            @if ($item->status_retur === 'Menunggu Konfirmasi')
+                                                <button type="button" class="btn btn-success btn-sm mb-1"
+                                                    onclick="openTerimaRetur({{ $item->retur_id }})" data-toggle="modal"
+                                                    data-target="#modalTerimaRetur">
+                                                    Terima
+                                                </button>
 
-                                            <button type="button" class="btn btn-danger btn-sm btn-tolak-retur"
-                                                data-id="{{ $item->retur_id }}">
-                                                Tolak
-                                            </button>
+                                                <button type="button" class="btn btn-danger btn-sm mb-1 btn-tolak-retur"
+                                                    data-id="{{ $item->retur_id }}">
+                                                    Tolak
+                                                </button>
+                                            @endif
+
+                                            {{-- DITERIMA & BELUM DIBAYAR --}}
+                                            @if ($item->status_retur === 'Diterima' && $item->payment === 0)
+                                                <form action="{{ route('retur.kirim', $item->retur_id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button class="btn btn-warning btn-sm mb-1">
+                                                        Kirim Barang
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            {{-- BAYAR REFUND --}}
+                                            @if ($item?->tb_payment?->status === 'Menunggu Pembayaran')
+                                                <button type="button" class="btn btn-success btn-sm mb-1 btn-bayar-refund"
+                                                    data-retur-id="{{ $item->retur_id }}" data-po-id="{{ $item->po_id }}"
+                                                    data-jumlah="{{ $item->tb_payment->jumlah }}" data-toggle="modal"
+                                                    data-target="#modalBayarRefund"
+                                                    data-payment-lists='@json($paymentLists)'>
+                                                    Bayar Refund
+                                                </button>
+                                            @endif
                                         @endif
 
-                                        {{-- SUPPLIER: KIRIM BARANG --}}
-                                        @if (auth()->user()->role === 'Supplier' && $item->payment === 0 && $item->status_retur === 'Diterima')
-                                            <form action="{{ route('retur.kirim', ['id' => $item->retur_id]) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-warning btn-sm">Kirim Barang</button>
-                                            </form>
-                                        @endif
-
-                                        {{-- GUDANG: SELESAI --}}
+                                        {{-- ================= GUDANG ================= --}}
                                         @if (auth()->user()->role === 'Gudang' && $item->status_retur === 'Dikirim')
-                                            <form action="{{ route('retur.selesai', ['id' => $item->retur_id]) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                <button class="btn btn-primary btn-sm">Selesai</button>
-                                            </form>
-                                        @endif
-
-                                        @if (auth()->user()->role === 'Manajer' && $item->payment === 1 && !($item?->tb_payment ?? null))
-                                            <form action="{{ route('retur.store.payment') }}" method="POST">
-                                                @csrf
-                                                <input type="hidden" name="retur_id" value="{{ $item->retur_id }}">
-
-                                                <input type="hidden" name="jumlah"
-                                                    value="{{ $produk->harga_beli * $item->qty_retur }}">
-
-                                                <button class="btn btn-primary btn-sm">Buat Payment</button>
-                                            </form>
-                                            {{-- <button class="btn btn-primary btn-sm"
-                                                onclick="
-    $('#rp_retur_id').val({{ $item->retur_id }});
-    $('#rp_jumlah').val({{ $item->produk->harga_beli }});
-"
-                                                data-toggle="modal" data-target="#modalReturPayment">
-                                                Buat Payment
-                                            </button> --}}
-                                        @endif
-
-                                        @if (auth()->user()->role === 'Supplier' && $item?->tb_payment?->status === 'Menunggu Pembayaran')
-                                            <button class="btn btn-success btn-sm btn-bayar-refund"
-                                                data-retur-id="{{ $item->retur_id }}" data-po-id="{{ $item->po_id }}"
-                                                data-jumlah="{{ $item->tb_payment->jumlah }}" data-toggle="modal"
-                                                data-target="#modalBayarRefund"
-                                                data-payment-lists='@json($paymentLists)'>
-                                                Bayar Refund
-                                            </button>
-                                        @endif
-
-                                        {{-- STATUS DIBAYAR --}}
-                                        @if ($item->status_retur === 'Dibayar' && auth()->user()->role === 'Manajer')
-                                            <button class="btn btn-info btn-sm"
-                                                onclick='openDetailPayment(@json($item->tb_payment))'
-                                                data-toggle="modal" data-target="#modalDetailReturPayment">
-                                                Lihat Payment
-                                            </button>
-
                                             <form action="{{ route('retur.selesai', $item->retur_id) }}" method="POST"
                                                 class="d-inline">
                                                 @csrf
-                                                <button class="btn btn-success btn-sm">
-                                                    Selesaikan
+                                                <button class="btn btn-primary btn-sm mb-1">
+                                                    Selesai
                                                 </button>
                                             </form>
                                         @endif
 
+                                        {{-- ================= MANAJER ================= --}}
+                                        @if (auth()->user()->role === 'Manajer')
+                                            {{-- BUAT PAYMENT --}}
+                                            @if ($item->payment === 1 && !($item?->tb_payment ?? null))
+                                                <form action="{{ route('retur.store.payment') }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="retur_id" value="{{ $item->retur_id }}">
+                                                    <input type="hidden" name="jumlah"
+                                                        value="{{ $produk->harga_beli * $item->qty_retur }}">
+
+                                                    <button class="btn btn-primary btn-sm mb-1">
+                                                        Buat Payment
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            {{-- SUDAH DIBAYAR --}}
+                                            @if ($item->status_retur === 'Dibayar')
+                                                <button type="button" class="btn btn-info btn-sm mb-1"
+                                                    onclick='openDetailPayment(@json($item->tb_payment))'
+                                                    data-toggle="modal" data-target="#modalDetailReturPayment">
+                                                    Lihat Payment
+                                                </button>
+
+                                                <form action="{{ route('retur.selesai', $item->retur_id) }}" method="POST"
+                                                    class="d-inline">
+                                                    @csrf
+                                                    <button class="btn btn-success btn-sm mb-1">
+                                                        Selesaikan
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endif
 
                                     </td>
+
                                 </tr>
                             @empty
                                 <tr>
@@ -263,7 +270,11 @@
             btn.addEventListener('click', function() {
                 document.getElementById('retur_id').value = this.dataset.returId;
                 document.getElementById('po_id').value = this.dataset.poId;
-                document.getElementById('jumlah').value = this.dataset.jumlah;
+                const jumlah = this.dataset.jumlah;
+
+                document.getElementById('jumlah').value = jumlah; // TANPA FORMAT
+                document.getElementById('jumlah_display').value = formatRupiah(jumlah);
+
 
                 const paymentLists = JSON.parse(this.dataset.paymentLists);
 
@@ -552,9 +563,14 @@
 
                     <div class="mb-3">
                         <label>Jumlah Refund</label>
-                        <input type="number" name="jumlah" id="jumlah" class="form-control" step="0.01"
-                            readonly>
+
+                        {{-- TAMPILAN (RUPIAH) --}}
+                        <input type="text" id="jumlah_display" class="form-control" readonly>
+
+                        {{-- VALUE ASLI --}}
+                        <input type="hidden" name="jumlah" id="jumlah">
                     </div>
+
 
                     <div class="mb-3">
                         <label>Tanggal Pembayaran</label>

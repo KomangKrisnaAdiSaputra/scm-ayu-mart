@@ -91,14 +91,14 @@ class ProdukController extends Controller
                 'tanggal_mulai_diskon' => $validated['tanggal_mulai_diskon'] ?? null,
                 'tanggal_akhir_diskon' => $validated['tanggal_akhir_diskon'] ?? null,
                 'berat_produk' => $validated['berat_produk'] ?? null,
-                'foto_produk' => $produk->foto_produk,
+                'foto_produk' => $produk?->foto_produk ?? null,
                 'status_produk' => $validated['status_produk'],
                 'satuan' => $validated['satuan'],
             ];
 
             // Upload foto
             if ($request->hasFile('foto_produk')) {
-                if ($produk->foto_produk) {
+                if ($produk?->foto_produk) {
                     $imagePublicId = pathinfo(parse_url($produk->foto_produk, PHP_URL_PATH), PATHINFO_FILENAME);
                     Cloudinary::destroy($imagePublicId);
                 }
@@ -112,7 +112,7 @@ class ProdukController extends Controller
             if ($produk) {
                 $produk->update($data);
             } else {
-                TbProduk::create($data);
+                $produk =  TbProduk::create($data);
             }
 
 

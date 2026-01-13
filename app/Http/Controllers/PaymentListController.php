@@ -130,4 +130,20 @@ class PaymentListController extends Controller
             throw $e;
         }
     }
+
+    public function destroy($id)
+    {
+        $payment = PaymentList::findOrFail($id);
+
+        // Optional: hapus foto jika ada
+        if ($payment->photo && file_exists(public_path($payment->photo))) {
+            unlink(public_path($payment->photo));
+        }
+
+        $payment->delete();
+
+        return redirect()
+            ->route('paymentlist')
+            ->with('success', 'Payment list berhasil dihapus.');
+    }
 }

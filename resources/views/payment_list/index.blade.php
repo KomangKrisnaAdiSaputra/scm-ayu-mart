@@ -88,6 +88,16 @@
                                                 Edit
                                             </a>
                                         @endif
+
+                                        {{-- Delete --}}
+                                        @if (auth()->user()->role === 'Manajer' ||
+                                                (auth()->user()->role === 'Supplier' && $item->supplier_id === auth()->user()->supplier_id))
+                                            <button type="button" class="btn btn-danger btn-sm"
+                                                onclick="openDeleteModal({{ $item->id }}, '{{ addslashes($item->name) }}')">
+                                                Hapus
+                                            </button>
+                                        @endif
+
                                     </td>
                                 </tr>
                             @empty
@@ -130,6 +140,19 @@
                 modal.find('#detailPhoto').hide();
             }
         });
+
+        function openDeleteModal(id, name) {
+            // Set nama payment
+            $('#deletePaymentName').text(name);
+
+            // Set action form DELETE
+            let actionUrl = "{{ route('paymentlist.delete', ':id') }}";
+            actionUrl = actionUrl.replace(':id', id);
+            $('#deletePaymentForm').attr('action', actionUrl);
+
+            // Show modal
+            $('#modalDeletePayment').modal('show');
+        }
     </script>
 @endsection
 
@@ -187,6 +210,46 @@
                     Tutup
                 </button>
             </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete Payment -->
+<div class="modal fade" id="modalDeletePayment" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Konfirmasi Hapus</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <form id="deletePaymentForm" method="POST">
+                @csrf
+                @method('DELETE')
+
+                <div class="modal-body">
+                    <p>
+                        Apakah Anda yakin ingin menghapus payment:
+                        <strong id="deletePaymentName"></strong>?
+                    </p>
+                    <p class="text-danger mb-0">
+                        Data yang sudah dihapus tidak dapat dikembalikan.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        Ya, Hapus
+                    </button>
+                </div>
+            </form>
 
         </div>
     </div>

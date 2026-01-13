@@ -55,12 +55,12 @@ class InvoiceController extends Controller
             'jumlah_bayar'      => 'required|numeric|min:1',
             'tanggal_bayar'     => 'required|date|before_or_equal:today',
             'metode_bayar'      => 'required|string|max:50',
-            'bukti_pembayaran'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'bukti_pembayaran'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         DB::transaction(function () use ($request, $invoice) {
 
-            $path = optional($invoice->payment)->bukti_pembayaran;
+            $path = optional($invoice->payment)?->bukti_pembayaran ?? null;
 
             // ✅ JIKA ADA FILE BARU
             if ($request->hasFile('bukti_pembayaran')) {

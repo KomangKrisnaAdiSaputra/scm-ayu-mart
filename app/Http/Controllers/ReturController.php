@@ -55,7 +55,6 @@ class ReturController extends Controller
         DB::beginTransaction();
 
         try {
-
             $hasRetur = false;
 
             foreach ($request->items as $poId => $products) {
@@ -79,7 +78,7 @@ class ReturController extends Controller
                     }
 
                     Retur::create([
-                        'po_id'         => $poId,
+                        'po_id'         => $request->po_id,
                         'produk_id'     => $item['produk_id'],
                         'qty_retur'     => $item['qty_retur'],
                         'alasan'        => $item['alasan'],
@@ -91,7 +90,7 @@ class ReturController extends Controller
                 }
 
                 if ($hasRetur) {
-                    PurchaseOrder::where('po_id', $poId)
+                    PurchaseOrder::where('po_id', $request->po_id)
                         ->update(['status_po' => 'Retur']);
                 }
             }

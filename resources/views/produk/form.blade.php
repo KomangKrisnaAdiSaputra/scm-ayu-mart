@@ -47,19 +47,34 @@
 
                                 <div class="form-group">
                                     <label>Kode Produk</label>
-                                    <input type="text" name="kode_produk" class="form-control"
+                                    <input type="text" name="kode_produk"
+                                        class="form-control @error('kode_produk') is-invalid @enderror"
                                         value="{{ old('kode_produk', $produk->kode_produk ?? '') }}">
+
+                                    @error('kode_produk')
+                                        <div class="invalid-feedback">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
                                 </div>
 
                                 <div class="form-group">
                                     <label>Nama Produk</label>
-                                    <input type="text" name="nama_produk" class="form-control"
+                                    <input type="text" name="nama_produk"
+                                        class="form-control @error('nama_produk') is-invalid @enderror"
                                         value="{{ old('nama_produk', $produk->nama_produk ?? '') }}">
+
+                                    @error('nama_produk')
+                                        <div class="invalid-feedback">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
                                 </div>
+
 
                                 <div class="form-group">
                                     <label>Jenis Produk</label>
-                                    <select name="kategori" class="form-control">
+                                    <select name="kategori" class="form-control @error('kategori') is-invalid @enderror">
                                         <option value="">-- Pilih Jenis --</option>
                                         @foreach ($jenis as $j)
                                             <option value="{{ $j->id_jenis }}"
@@ -68,7 +83,14 @@
                                             </option>
                                         @endforeach
                                     </select>
+
+                                    @error('kategori')
+                                        <div class="invalid-feedback">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
                                 </div>
+
 
                                 <div class="form-group">
                                     <label>Deskripsi Produk</label>
@@ -107,7 +129,14 @@
 
                                 <div class="form-group">
                                     <label>Foto Produk</label>
-                                    <input type="file" name="foto_produk" class="form-control-file">
+                                    <input type="file" name="foto_produk"
+                                        class="form-control-file @error('foto_produk') is-invalid @enderror">
+
+                                    @error('foto_produk')
+                                        <div class="text-danger small">
+                                            {{ $message }}
+                                        </div>
+                                    @enderror
 
                                     @if (!empty($produk->foto_produk))
                                         <img src="{{ $produk->foto_produk }}" class="mt-2" height="80">
@@ -134,18 +163,27 @@
                                 <label>Harga Diskon</label>
                                 <input type="text" name="harga_diskon" class="form-control text-right currency"
                                     value="{{ old('harga_diskon', $produk->harga_diskon ?? '') }}">
+                                @error('harga_diskon')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
 
                             <div class="form-group">
                                 <label>Tanggal Mulai Diskon</label>
                                 <input type="date" name="tanggal_mulai_diskon" class="form-control"
                                     value="{{ old('tanggal_mulai_diskon', $produk->tanggal_mulai_diskon ?? '') }}">
+                                @error('tanggal_mulai_diskon')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
 
                             <div class="form-group">
                                 <label>Tanggal Akhir Diskon</label>
                                 <input type="date" name="tanggal_akhir_diskon" class="form-control"
                                     value="{{ old('tanggal_akhir_diskon', $produk->tanggal_akhir_diskon ?? '') }}">
+                                @error('tanggal_akhir_diskon')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -158,14 +196,15 @@
                             @if (!isset($produk->id_produk))
                                 <div class="col-md-6">
                                     <label>Stok Awal</label>
-                                    <input type="number" name="stok_total" class="form-control" min="0">
+                                    <input type="number" name="stok_total" class="form-control" min="0"
+                                        value="{{ old('stok_total', '') }}">
                                 </div>
                             @endif
 
                             <div class="col-md-6">
                                 <label>Stok Minimum</label>
                                 <input type="number" name="stok_minimum" class="form-control"
-                                    value="{{ old('stok_minimum', $stokGudang->stok_minimum ?? 0) }}">
+                                    value="{{ old('stok_minimum', $stokGudang->stok_minimum ?? '') }}">
                             </div>
 
                         </div>

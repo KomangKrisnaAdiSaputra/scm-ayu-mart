@@ -104,7 +104,8 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware(['role:Manajer|Supplier'])->prefix('payment-list')->name('paymentlist')->controller(PaymentListController::class)->group(function () {
-        Route::post('save', 'save')->name('.save');
+        Route::delete('delete{id}', 'destroy')->name('.delete');
+        Route::post('save/{id?}', 'save')->name('.save');
         Route::get('form/{id?}', 'form')->name('.form');
         Route::get('/', 'index');
     });
