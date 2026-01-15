@@ -259,6 +259,47 @@
                             </li>
                         </ul>
                     @endif
+
+                    @if (in_array(auth()->user()->role, ['Owner']))
+                        <ul class="sidebar-menu">
+                            <li class="menu-header">Laporan</li>
+
+                            <li class="{{ request()->routeIs('laporan.po.*') ? 'active' : '' }}">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <span>Purchase Order</span>
+                                </a>
+                            </li>
+
+                            <li class="{{ request()->routeIs('laporan.retur.*') ? 'active' : '' }}">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-undo"></i>
+                                    <span>Retur</span>
+                                </a>
+                            </li>
+
+                            <li class="{{ request()->routeIs('laporan.pengiriman.*') ? 'active' : '' }}">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-truck"></i>
+                                    <span>Pengiriman</span>
+                                </a>
+                            </li>
+
+                            <li class="{{ request()->routeIs('laporan.stok.gudang.*') ? 'active' : '' }}">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-warehouse"></i>
+                                    <span>Stok Gudang</span>
+                                </a>
+                            </li>
+
+                            <li class="{{ request()->routeIs('laporan.stok.cabang.*') ? 'active' : '' }}">
+                                <a class="nav-link" href="#">
+                                    <i class="fas fa-store"></i>
+                                    <span>Stok Cabang</span>
+                                </a>
+                            </li>
+                        </ul>
+                    @endif
                 </aside>
             </div>
 
