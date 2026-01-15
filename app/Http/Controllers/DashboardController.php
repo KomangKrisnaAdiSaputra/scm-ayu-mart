@@ -26,7 +26,8 @@ class DashboardController extends Controller
             "Kurir" => "dashKurir",
             "Cabang" => "dashCabang",
             "Manajer" => "dashManajer",
-            "Owner" => "dashOwner"
+            "Gudang" => "dashGudang",
+            "Owner" => "dashOwner",
         ];
 
         $funProps = $datas[auth()->user()->role] ?? null;
@@ -616,6 +617,235 @@ class DashboardController extends Controller
                         ],
                     ],
                     'options' => (object) [],
+                ],
+            ]),
+        ]);
+    }
+
+    function dashGudang()
+    {
+        $periodeTahun = now()->year;
+
+        /*
+        |--------------------------------------------------------------------------
+        | AMBIL DATA SEKALI
+        |--------------------------------------------------------------------------
+        */
+        $purchaseOrders   = PurchaseOrder::all();
+        $permintaanCabang = PermintaanCabang::all();
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUMMARY PO
+        |--------------------------------------------------------------------------
+        */
+        $totalPO = $purchaseOrders->count();
+
+        $poBulanIni = $purchaseOrders->filter(
+            fn($po) => Carbon::parse($po->tanggal_po)->isSameMonth(now())
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS PO BULAN INI (CARD)
+        |--------------------------------------------------------------------------
+        */
+        $statusPOBulanIni = $poBulanIni
+            ->groupBy('status_po')
+            ->map(fn($items) => $items->count());
+
+        $statusPOConfig = [
+            'Menunggu Persetujuan' => ['bg' => 'bg-warning', 'icon' => 'cogs'],
+            'Disetujui Manajer'    => ['bg' => 'bg-info',    'icon' => 'truck'],
+            'Dikirim Supplier'    => ['bg' => 'bg-success', 'icon' => 'box-open'],
+            'Selesai'             => ['bg' => 'bg-primary', 'icon' => 'check-circle'],
+        ];
+
+        $cardsStatusPO = collect($statusPOConfig)
+            ->map(fn($config, $status) => [
+                'bg'     => $config['bg'],
+                'icon'   => $config['icon'],
+                'header' => $status,
+                'body'   => $statusPOBulanIni->get($status, 0),
+            ])
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RETUR & CABANG
+        |--------------------------------------------------------------------------
+        */
+        $retur        = Retur::whereYear('tanggal_retur', $periodeTahun)->get();
+        $totalRetur  = $retur->count();
+        $totalCabang = TbCabang::count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | PERMINTAAN CABANG BULAN INI
+        |--------------------------------------------------------------------------
+        */
+        $totalPermintaanBulanIni = $permintaanCabang
+            ->filter(
+                fn($item) =>
+                Carbon::parse($item->tanggal_permintaan)->isSameMonth(now())
+            )
+            ->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | DISTRIBUSI STOK GUDANG PER JENIS
+        |--------------------------------------------------------------------------
+        */
+        $integrationDb = config('database.connections.mysqlIntegration.database');
+
+        $stokPerJenis = StokGudang::selectRaw("
+        tb_jenis.nama_jenis,
+        SUM(stok_gudang.stok_total) AS total_stok
+    ")
+            ->join("$integrationDb.tb_produk as tb_produk", 'tb_produk.id_produk', '=', 'stok_gudang.produk_id')
+            ->join("$integrationDb.tb_jenis as tb_jenis", 'tb_jenis.id_jenis', '=', 'tb_produk.id_jenis')
+            ->groupBy('tb_jenis.nama_jenis')
+            ->orderByDesc('total_stok')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHART: STATUS PO
+        |--------------------------------------------------------------------------
+        */
+        $statusPOChart = $purchaseOrders
+            ->groupBy(fn($po) => match ($po->status_po) {
+                'Menunggu Persetujuan' => 'Menunggu',
+                'Disetujui Manajer'    => 'Disetujui',
+                'Dikirim Supplier'    => 'Dikirim',
+                'Selesai'             => 'Selesai',
+                default               => 'Lainnya',
+            })
+            ->map(fn($items) => $items->count())
+            ->map(fn($total, $status) => [
+                'status_group' => $status,
+                'total'        => $total,
+            ])
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | STOK GUDANG MENIPIS
+        |--------------------------------------------------------------------------
+        */
+        $stokGudang = StokGudang::whereColumn('stok_total', '<=', 'stok_minimum')
+            ->limit(5)
+            ->get();
+
+        $produkGudang = TbProduk::whereIn(
+            'id_produk',
+            $stokGudang->pluck('produk_id')
+        )->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAPPING TABEL STOK GUDANG
+        |--------------------------------------------------------------------------
+        */
+        $tabelStokGudangMenipis = $stokGudang
+            ->map(function ($stok) use ($produkGudang) {
+                $produk = $produkGudang->firstWhere('id_produk', $stok->produk_id);
+
+                return [
+                    'nama_produk'  => $produk?->nama_produk ?? '-',
+                    'total_stok'   => $stok->stok_total,
+                    'stok_minimum' => $stok->stok_minimum,
+                    'status'       => $stok->stok_total <= $stok->stok_minimum,
+                ];
+            })
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | RETURN DASHBOARD CONFIG
+        |--------------------------------------------------------------------------
+        */
+        return collect([
+            'cards' => collect([
+                [
+                    'bg'     => 'bg-primary',
+                    'icon'   => 'shopping-cart',
+                    'header' => 'Total Purchase Order',
+                    'body'   => $totalPO,
+                ],
+                [
+                    'bg'     => 'bg-info',
+                    'icon'   => 'calendar',
+                    'header' => 'PO Bulan Ini',
+                    'body'   => $poBulanIni->count(),
+                ],
+                [
+                    'bg'     => 'bg-warning',
+                    'icon'   => 'undo',
+                    'header' => 'Total Retur',
+                    'body'   => $totalRetur,
+                ],
+                [
+                    'bg'     => 'bg-secondary',
+                    'icon'   => 'store',
+                    'header' => 'Total Cabang',
+                    'body'   => $totalCabang,
+                ],
+                [
+                    'bg'     => 'bg-info',
+                    'icon'   => 'calendar',
+                    'header' => 'Permintaan Bulan Ini',
+                    'body'   => $totalPermintaanBulanIni,
+                ],
+            ])->merge($cardsStatusPO),
+
+            'charts' => collect([
+                [
+                    'id'    => 'statusPO',
+                    'type'  => 'doughnut',
+                    'title' => 'Status Purchase Order',
+                    'data'  => [
+                        'labels' => $statusPOChart->pluck('status_group'),
+                        'datasets' => [[
+                            'data' => $statusPOChart->pluck('total'),
+                        ]],
+                    ],
+                    'options' => (object) [],
+                ],
+                [
+                    'id'    => 'stokPerJenis',
+                    'type'  => 'doughnut',
+                    'title' => 'Jenis Stok Gudang',
+                    'data'  => [
+                        'labels' => $stokPerJenis->pluck('nama_jenis'),
+                        'datasets' => [[
+                            'data' => $stokPerJenis->pluck('total_stok'),
+                        ]],
+                    ],
+                    'options' => (object) [],
+                ],
+            ]),
+
+            'tables' => collect([
+                [
+                    'id'    => 'stokGudangMenipis',
+                    'col'   => 6,
+                    'theme' => 'danger',
+                    'icon'  => 'exclamation-triangle',
+                    'title' => 'Stok Gudang Menipis',
+                    'headers' => [
+                        ['key' => 'nama_produk', 'label' => 'Produk'],
+                        ['key' => 'stok', 'label' => 'Stok'],
+                    ],
+                    'rows' => $tabelStokGudangMenipis->map(fn($row) => [
+                        'nama_produk' => $row['nama_produk'],
+                        'stok' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-danger',
+                            'text'  => "{$row['total_stok']} / {$row['stok_minimum']}",
+                        ],
+                    ]),
+                    'empty_text' => 'Semua stok gudang aman',
                 ],
             ]),
         ]);
