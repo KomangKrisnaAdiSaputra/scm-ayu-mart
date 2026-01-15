@@ -27,7 +27,7 @@ class LoginController extends Controller
         ])) {
 
             $request->session()->regenerate();
-
+            session(['last_activity' => now()]);
             return redirect()->route('dashboard');
             // return match (auth()->user()->role) {
             //     'Gudang'   => redirect('/gudang'),

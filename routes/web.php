@@ -20,6 +20,7 @@ use App\Http\Controllers\PermintaanCabangController;
 use App\Http\Controllers\PengirimanController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\ReturController;
+use App\Http\Controllers\UserSettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,5 +114,12 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:Manajer'])->prefix('jenis-produk')->name('jenisproduk')->controller(JenisProdukController::class)->group(function () {
         Route::post('save', 'save')->name('.save');
         Route::get('/', 'index');
+    });
+
+    Route::prefix('setting')->name('setting')->group(function () {
+        Route::prefix('user')->name('.user')->controller(UserSettingController::class)->group(function () {
+            Route::post('update', 'update')->name('.update');
+            Route::get('/', 'index');
+        });
     });
 });
