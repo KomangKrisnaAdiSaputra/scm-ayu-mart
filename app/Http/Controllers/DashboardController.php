@@ -102,7 +102,7 @@ class DashboardController extends Controller
             ]),
             "charts" => collect([
                 [
-                    'id'    => 'statusChart',
+                    'id'    => 'statusPO',
                     'type'  => 'doughnut',
                     'title' => 'Status Purchase Order',
                     'data'  => [
@@ -857,6 +857,7 @@ class DashboardController extends Controller
         $dashKurir = $this->dashKurir();
         $dashCabang = $this->dashCabang();
         $dashManajer = $this->dashManajer();
+        $dashGudang = $this->dashGudang();
 
         $datas = collect([
             'cards' => collect([
@@ -864,20 +865,37 @@ class DashboardController extends Controller
                 ...($dashKurir["cards"] ?? []),
                 ...($dashCabang["cards"] ?? []),
                 ...($dashManajer["cards"] ?? []),
-            ])->unique("header")->filter(fn($item) => !isset($item["hidden"]))->values(),
+                ...($dashGudang["cards"] ?? []),
+            ])->unique("header")->filter(fn($item) => !isset($item["hidden"]) && !in_array($item["header"], [
+                "Permintaan Menunggu",
+                "Permintaan Diterima",
+                "Permintaan Ditolak",
+                "Menunggu Persetujuan",
+                "Disetujui Manajer",
+                "Dikirim Supplier",
+                "Selesai",
+                "Pengiriman Diproses",
+                "Pengiriman Dikirim",
+                "Pengiriman Diterima",
+                "Pengiriman Selesai",
+                "Pengiriman Gagal",
+            ]))->values(),
             'charts' => collect([
                 ...($dashSupplier["charts"] ?? []),
                 ...($dashKurir["charts"] ?? []),
                 ...($dashCabang["charts"] ?? []),
                 ...($dashManajer["charts"] ?? []),
-            ])->unique("id")->values(),
+                ...($dashGudang["charts"] ?? []),
+            ])->unique("id")->filter(fn($item) => !in_array($item["id"], ["stokPerJenis"]))->values(),
             'tables' => collect([
                 ...($dashSupplier["tables"] ?? []),
                 ...($dashKurir["tables"] ?? []),
                 ...($dashCabang["tables"] ?? []),
                 ...($dashManajer["tables"] ?? []),
+                ...($dashGudang["tables"] ?? []),
             ])->unique("id")->values(),
         ]);
+        // dd($datas);
         return $datas;
     }
 
