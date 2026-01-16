@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JenisProdukController;
 use App\Http\Controllers\Laporan\PurchaseOrderController as LaporanPurchaseOrderController;
+use App\Http\Controllers\Laporan\ReturController as LaporanReturController;
 use App\Http\Controllers\PaymentListController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
@@ -126,6 +127,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:Owner'])->prefix('laporan')->name('laporan')->group(function () {
         Route::prefix('purchase-order')->name('.purchaseorder')->controller(LaporanPurchaseOrderController::class)->group(function () {
+            Route::get('export/pdf', 'exportPdf')->name('.pdf');
+            Route::get('/', 'index');
+        });
+
+        Route::prefix('retur')->name('.retur')->controller(LaporanReturController::class)->group(function () {
             Route::get('export/pdf', 'exportPdf')->name('.pdf');
             Route::get('/', 'index');
         });

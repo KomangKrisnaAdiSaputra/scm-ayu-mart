@@ -272,8 +272,9 @@
                                 </a>
                             </li>
 
-                            <li class="{{ request()->routeIs('laporan.retur.*') ? 'active' : '' }}">
-                                <a class="nav-link" href="#">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Retur' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('laporan.retur') }}">
                                     <i class="fas fa-undo"></i>
                                     <span>Retur</span>
                                 </a>
