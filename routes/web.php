@@ -14,6 +14,7 @@ use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JenisProdukController;
+use App\Http\Controllers\Laporan\PurchaseOrderController as LaporanPurchaseOrderController;
 use App\Http\Controllers\PaymentListController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PermintaanCabangController;
@@ -119,6 +120,13 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('setting')->name('setting')->group(function () {
         Route::prefix('user')->name('.user')->controller(UserSettingController::class)->group(function () {
             Route::post('update', 'update')->name('.update');
+            Route::get('/', 'index');
+        });
+    });
+
+    Route::middleware(['role:Owner'])->prefix('laporan')->name('laporan')->group(function () {
+        Route::prefix('purchase-order')->name('.purchaseorder')->controller(LaporanPurchaseOrderController::class)->group(function () {
+            Route::get('export/pdf', 'exportPdf')->name('.pdf');
             Route::get('/', 'index');
         });
     });

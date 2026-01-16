@@ -264,8 +264,9 @@
                         <ul class="sidebar-menu">
                             <li class="menu-header">Laporan</li>
 
-                            <li class="{{ request()->routeIs('laporan.po.*') ? 'active' : '' }}">
-                                <a class="nav-link" href="#">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Purchase Order' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('laporan.purchaseorder') }}">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Purchase Order</span>
                                 </a>
