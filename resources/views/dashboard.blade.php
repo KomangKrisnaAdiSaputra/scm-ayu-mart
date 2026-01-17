@@ -34,10 +34,10 @@
             @foreach ($batchCharts as $chart)
                 @php
                     $colChartLg =
-                        $batchCharts->count() <= 4 ? ($batchCharts->count() == 1 ? 6 : 3) : 12 / $batchCharts->count();
+                        $batchCharts->count() <= 4 ? ($batchCharts->count() == 2 ? 6 : 3) : 12 / $batchCharts->count();
                     $colChartMd =
                         $batchCharts->count() <= 4
-                            ? ($batchCharts->count() == 1
+                            ? ($batchCharts->count() == 2
                                 ? 12
                                 : 6)
                             : 12 / ($batchCharts->count() / 2);

@@ -853,50 +853,385 @@ class DashboardController extends Controller
 
     function dashOwner()
     {
-        $dashSupplier = $this->dashSupplier();
-        $dashKurir = $this->dashKurir();
-        $dashCabang = $this->dashCabang();
-        $dashManajer = $this->dashManajer();
-        $dashGudang = $this->dashGudang();
+        $periodeTahun = now()->year;
 
-        $datas = collect([
-            'cards' => collect([
-                ...($dashSupplier["cards"] ?? []),
-                ...($dashKurir["cards"] ?? []),
-                ...($dashCabang["cards"] ?? []),
-                ...($dashManajer["cards"] ?? []),
-                ...($dashGudang["cards"] ?? []),
-            ])->unique("header")->filter(fn($item) => !isset($item["hidden"]) && !in_array($item["header"], [
-                "Permintaan Menunggu",
-                "Permintaan Diterima",
-                "Permintaan Ditolak",
-                "Menunggu Persetujuan",
-                "Disetujui Manajer",
-                "Dikirim Supplier",
-                "Selesai",
-                "Pengiriman Diproses",
-                "Pengiriman Dikirim",
-                "Pengiriman Diterima",
-                "Pengiriman Selesai",
-                "Pengiriman Gagal",
-            ]))->values(),
-            'charts' => collect([
-                ...($dashSupplier["charts"] ?? []),
-                ...($dashKurir["charts"] ?? []),
-                ...($dashCabang["charts"] ?? []),
-                ...($dashManajer["charts"] ?? []),
-                ...($dashGudang["charts"] ?? []),
-            ])->unique("id")->filter(fn($item) => !in_array($item["id"], ["stokPerJenis"]))->values(),
-            'tables' => collect([
-                ...($dashSupplier["tables"] ?? []),
-                ...($dashKurir["tables"] ?? []),
-                ...($dashCabang["tables"] ?? []),
-                ...($dashManajer["tables"] ?? []),
-                ...($dashGudang["tables"] ?? []),
-            ])->unique("id")->values(),
+        $purchaseOrders = PurchaseOrder::all();
+
+        // Ambil semua PO sekali saja
+        $purchaseOrders = PurchaseOrder::all();
+
+        $totalPO = $purchaseOrders->count();
+        $totalPOBulanIni = $purchaseOrders->filter(fn($item) => \Carbon\Carbon::parse($item->tanggal_po)->isSameMonth(now()))->count();
+
+        $retur = Retur::whereYear('tanggal_retur', $periodeTahun)->get();
+        $totalRetur = $retur->count();
+
+        $totalPengeluaranBulanIni = InvoicePayment::whereMonth('tanggal_bayar', now()->month)
+            ->whereYear('tanggal_bayar', now()->year)
+            ->sum('jumlah_bayar');
+
+        $totalSupplier = Supplier::count();
+        $totalCabang   = TbCabang::count();
+
+        $statusPOChart = $purchaseOrders
+            ->groupBy(function ($po) {
+                return match ($po->status_po) {
+                    'Menunggu Persetujuan' => 'Menunggu',
+                    'Disetujui Manajer'    => 'Disetujui',
+                    'Dikirim Supplier'    => 'Dikirim',
+                    'Selesai'             => 'Selesai',
+                    default               => 'Lainnya',
+                };
+            })
+            ->map(fn($items) => $items->count())
+            ->map(fn($total, $status) => [
+                'status_group' => $status,
+                'total'        => $total,
+            ])
+            ->values();
+
+        $alasanRetur = $retur->groupBy('alasan')->map(fn($items, $key) => [
+            'alasan' => $key,
+            'total'  => $items->count(),
+        ])->sortByDesc('total')->values();
+
+        $trendPembelian = $purchaseOrders
+            ->filter(
+                fn($po) =>
+                Carbon::parse($po->tanggal_po)->year === now()->year
+            )
+            ->groupBy(
+                fn($po) =>
+                Carbon::parse($po->tanggal_po)->month
+            )
+            ->map(function ($items, $bulan) {
+                return [
+                    'bulan'        => $bulan,
+                    'jumlah_po'    => $items->count(),
+                    'total_nilai'  => $items->sum('total_po'),
+                ];
+            })
+            ->sortBy('bulan')
+            ->values();
+
+        $permintaan = PermintaanCabang::select(
+            'cabang_id',
+            DB::raw('MONTH(tanggal_permintaan) as bulan'),
+            DB::raw('COUNT(*) as jumlah')
+        )
+            ->whereYear('tanggal_permintaan', now()->year)
+            ->groupBy('cabang_id', 'bulan')
+            ->orderBy('bulan')
+            ->get();
+
+        $cabang = TbCabang::select('id_cabang', 'nama_cabang')
+            ->get()
+            ->keyBy('id_cabang');
+
+        $labels = collect(range(1, 12))
+            ->map(fn($b) => "Bulan $b");
+
+        $datasets = $permintaan
+            ->groupBy('cabang_id')
+            ->map(function ($items, $cabangId) use ($cabang) {
+
+                $data = collect(range(1, 12))->map(function ($bulan) use ($items) {
+                    return $items->firstWhere('bulan', $bulan)->jumlah ?? 0;
+                });
+
+                return [
+                    'label'   => $cabang[$cabangId]->nama_cabang ?? "Cabang #$cabangId",
+                    'data'    => $data,
+                    'tension' => 0.4,
+                    'fill'    => false,
+                ];
+            })
+            ->values();
+
+        $pengiriman = Pengiriman::all();
+        $pengirimanStatus = $pengiriman
+            ->groupBy('status_pengiriman')
+            ->map(fn($items) => $items->count());
+        $statusPengirimanConfig = [
+            'Diproses' => ['bg' => 'bg-warning', 'icon' => 'cogs'],
+            'Dikirim'  => ['bg' => 'bg-info',    'icon' => 'truck'],
+            'Diterima' => ['bg' => 'bg-success', 'icon' => 'box-open'],
+            'Selesai'  => ['bg' => 'bg-primary', 'icon' => 'check-circle'],
+            'Gagal'    => ['bg' => 'bg-danger',  'icon' => 'times-circle'],
+        ];
+
+        $grafikPengiriman = collect([
+            'labels' => array_keys($statusPengirimanConfig),
+            'data'   => array_values(
+                collect($statusPengirimanConfig)
+                    ->keys()
+                    ->map(fn($status) => $pengirimanStatus->get($status, 0))
+                    ->toArray()
+            ),
         ]);
+
+        $integrationDb = config('database.connections.mysqlIntegration.database');
+
+        $stokPerJenis = StokGudang::selectRaw("
+        tb_jenis.nama_jenis,
+        SUM(stok_gudang.stok_total) AS total_stok
+    ")
+            ->join("$integrationDb.tb_produk as tb_produk", 'tb_produk.id_produk', '=', 'stok_gudang.produk_id')
+            ->join("$integrationDb.tb_jenis as tb_jenis", 'tb_jenis.id_jenis', '=', 'tb_produk.id_jenis')
+            ->groupBy('tb_jenis.nama_jenis')
+            ->orderByDesc('total_stok')
+            ->get();
+
+        $topSuppliers = Supplier::withCount([
+            'purchaseOrders as total_po'
+        ])
+            ->withSum('purchaseOrders as total_nilai', 'total_po')
+            ->orderByDesc('total_po')
+            ->limit(5)
+            ->get();
+
+        $supplierRetur = Retur::join('purchase_order', 'retur.po_id', '=', 'purchase_order.po_id')
+            ->join('supplier', 'purchase_order.supplier_id', '=', 'supplier.supplier_id')
+            ->select(
+                'supplier.nama_supplier',
+                DB::raw('COUNT(retur.retur_id) as total_retur'),
+                DB::raw('SUM(retur.qty_retur) as total_qty')
+            )
+            ->groupBy('supplier.nama_supplier')
+            ->orderByDesc('total_retur')
+            ->limit(5)
+            ->get();
+
         // dd($datas);
-        return $datas;
+        return collect([
+            "cards" => collect([
+                [
+                    'bg'     => 'bg-primary',
+                    'icon'   => 'shopping-cart',
+                    'header' => 'Total PO',
+                    'body'   => $totalPO,
+                ],
+                [
+                    'bg'     => 'bg-info',
+                    'icon'   => 'calendar',
+                    'header' => 'PO Bulan Ini',
+                    'body'   => $totalPOBulanIni,
+                ],
+                [
+                    'bg'     => 'bg-danger',
+                    'icon'   => 'undo',
+                    'header' => 'Total Retur',
+                    'body'   => $totalRetur,
+                ],
+                [
+                    'bg'     => 'bg-success',
+                    'icon'   => 'money-bill-wave',
+                    'header' => 'Total Uang Keluar',
+                    'body'   => number_format($totalPengeluaranBulanIni),
+                ],
+                [
+                    'bg'     => 'bg-dark',
+                    'icon'   => 'truck-loading',
+                    'header' => 'Total Supplier',
+                    'body'   => $totalSupplier,
+                ],
+                [
+                    'bg'     => 'bg-secondary',
+                    'icon'   => 'store',
+                    'header' => 'Total Cabang',
+                    'body'   => $totalCabang,
+                ],
+            ]),
+            "charts" => collect([
+                [
+                    'id'    => 'statusPO',
+                    'type'  => 'doughnut',
+                    'title' => 'Status Purchase Order',
+                    'data'  => [
+                        'labels' => $statusPOChart->pluck('status_group'),
+                        'datasets' => [
+                            [
+                                'data' => $statusPOChart->pluck('total'),
+                            ],
+                        ],
+                    ],
+                    'options' => (object) [],
+                ],
+                [
+                    'id'    => 'chartAlasanRetur',
+                    'type'  => 'pie',
+                    'title' => 'Alasan Retur Supplier',
+                    'data'  => [
+                        'labels' => $alasanRetur->pluck('alasan')->values(),
+                        'datasets' => [
+                            [
+                                'data' => $alasanRetur->pluck('total')->values(),
+                            ],
+                        ],
+                    ],
+                    'options' => [
+                        'responsive' => true,
+                        'plugins' => [
+                            'legend' => [
+                                'position' => 'bottom',
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id'    => 'stokPerJenis',
+                    'type'  => 'doughnut',
+                    'title' => 'Jenis Stok Gudang',
+                    'data'  => [
+                        'labels' => $stokPerJenis->pluck('nama_jenis'),
+                        'datasets' => [[
+                            'data' => $stokPerJenis->pluck('total_stok'),
+                        ]],
+                    ],
+                    'options' => (object) [],
+                ],
+                [
+                    'id'    => 'trendPembelian',
+                    'type'  => 'line',
+                    'title' => 'Tren Pembelian Bulanan',
+                    'data'  => [
+                        'labels' => $trendPembelian
+                            ->pluck('bulan')
+                            ->map(fn($b) => "Bulan $b"),
+
+                        'datasets' => [
+                            [
+                                'label' => 'Jumlah PO',
+                                'data'  => $trendPembelian->pluck('jumlah_po'),
+                            ],
+                            [
+                                'label'    => 'Total Transaksi',
+                                'data'     => $trendPembelian->pluck('total_nilai'),
+                                'tension'  => 0.4,
+                                'yAxisID'  => 'y1',
+                            ],
+                        ],
+                    ],
+                    'options' => [
+                        'scales' => [
+                            'y' => [
+                                'beginAtZero' => true,
+                            ],
+                            'y1' => [
+                                'beginAtZero' => true,
+                                'position'    => 'right',
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id'    => 'permintaanCabangBulanan',
+                    'type'  => 'line',
+                    'title' => 'Grafik Permintaan Cabang per Bulan',
+                    'data'  => [
+                        'labels'   => $labels,
+                        'datasets' => $datasets,
+                    ],
+                    'options' => [
+                        'responsive' => true,
+                        'scales' => [
+                            'y' => [
+                                'beginAtZero' => true,
+                                'title' => [
+                                    'display' => true,
+                                    'text' => 'Jumlah Permintaan',
+                                ],
+                            ],
+                        ],
+                        'plugins' => [
+                            'legend' => [
+                                'position' => 'bottom',
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'id'    => 'chartPengiriman',
+                    'type'  => 'bar',
+                    'title' => 'Status Pengiriman',
+                    'data'  => [
+                        'labels' => $grafikPengiriman['labels'],
+                        'datasets' => [
+                            [
+                                'label' => 'Jumlah Pengiriman',
+                                'data'  => $grafikPengiriman['data'],
+                            ],
+                        ],
+                    ],
+                    'options' => [
+                        'indexAxis' => 'y',
+                        'responsive' => true,
+                        'plugins' => [
+                            'legend' => [
+                                'display' => false,
+                            ],
+                        ],
+                    ],
+                ],
+
+            ]),
+            "tables" => collect([
+                [
+                    'id'    => 'topSuppliers',
+                    'col'   => 6,
+                    'theme' => 'primary',
+                    'icon'  => 'truck',
+                    'title' => 'Top 5 Supplier',
+                    'headers' => [
+                        ['key' => 'nama_supplier', 'label' => 'Supplier'],
+                        ['key' => 'total_po', 'label' => 'Total PO'],
+                        ['key' => 'total_nilai', 'label' => 'Total Nilai'],
+                    ],
+                    'rows' => $topSuppliers->map(fn($row) => [
+                        'nama_supplier' => $row->nama_supplier,
+                        'total_po' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-info',
+                            'text'  => $row->total_po,
+                        ],
+                        'total_nilai' => 'Rp ' . number_format(
+                            $row->total_nilai ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ),
+                    ]),
+                    'empty_text' => 'Belum ada data supplier',
+                ],
+                [
+                    'id'    => 'topSupplierRetur',
+                    'col'   => 6,
+                    'theme' => 'warning',
+                    'icon'  => 'undo-alt',
+                    'title' => 'Top 5 Supplier Retur',
+                    'headers' => [
+                        ['key' => 'nama_supplier', 'label' => 'Supplier'],
+                        ['key' => 'total_retur', 'label' => 'Total Retur'],
+                        ['key' => 'total_qty', 'label' => 'Total Qty Retur'],
+                    ],
+                    'rows' => $supplierRetur->map(fn($row) => [
+                        'nama_supplier' => $row->nama_supplier,
+                        'total_retur' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-warning',
+                            'text'  => $row->total_retur,
+                        ],
+                        'total_qty' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-danger',
+                            'text'  => $row->total_qty,
+                        ],
+                    ]),
+                    'empty_text' => 'Belum ada data retur supplier',
+                ],
+
+            ])
+        ]);
     }
 
     public function indexx()
