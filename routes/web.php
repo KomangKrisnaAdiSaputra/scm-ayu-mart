@@ -14,6 +14,7 @@ use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JenisProdukController;
+use App\Http\Controllers\Laporan\PengirimanController as LaporanPengirimanController;
 use App\Http\Controllers\Laporan\PurchaseOrderController as LaporanPurchaseOrderController;
 use App\Http\Controllers\Laporan\ReturController as LaporanReturController;
 use App\Http\Controllers\PaymentListController;
@@ -132,6 +133,11 @@ Route::middleware(['auth'])->group(function () {
         });
 
         Route::prefix('retur')->name('.retur')->controller(LaporanReturController::class)->group(function () {
+            Route::get('export/pdf', 'exportPdf')->name('.pdf');
+            Route::get('/', 'index');
+        });
+
+        Route::prefix('pengiriman')->name('.pengiriman')->controller(LaporanPengirimanController::class)->group(function () {
             Route::get('export/pdf', 'exportPdf')->name('.pdf');
             Route::get('/', 'index');
         });

@@ -38,7 +38,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($purchaseOrders as $po)
+            @forelse ($purchaseOrders as $po)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $po->kode_po }}</td>
@@ -47,7 +47,13 @@
                     <td align="right">{{ number_format($po->total_po) }}</td>
                     <td>{{ $po->status_po }}</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="6" align="center">
+                        <strong>Data tidak ditemukan</strong>
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 
