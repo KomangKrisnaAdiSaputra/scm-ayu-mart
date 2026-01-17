@@ -237,7 +237,7 @@ class DashboardController extends Controller
                     'header' => 'Pengiriman Bulan Ini',
                     'body'   => $totalPengirimanBulanIni,
                 ],
-            ])->merge($cardsStatusPengiriman),
+            ]),
 
             'charts' => collect([
                 [
@@ -321,6 +321,27 @@ class DashboardController extends Controller
             'Ditolak'  => ['bg' => 'bg-danger',  'icon' => 'times-circle'],
         ];
 
+        $pengiriman = Pengiriman::whereIn("permintaan_id", $permintaanCabang->pluck("permintaan_id")->values())->get();
+        $pengirimanStatus = $pengiriman
+            ->groupBy('status_pengiriman')
+            ->map(fn($items) => $items->count());
+        $statusPengirimanConfig = [
+            'Diproses' => ['bg' => 'bg-warning', 'icon' => 'cogs'],
+            'Dikirim'  => ['bg' => 'bg-info',    'icon' => 'truck'],
+            'Diterima' => ['bg' => 'bg-success', 'icon' => 'box-open'],
+            'Selesai'  => ['bg' => 'bg-primary', 'icon' => 'check-circle'],
+            'Gagal'    => ['bg' => 'bg-danger',  'icon' => 'times-circle'],
+        ];
+        $cardsStatusPengiriman = collect($statusPengirimanConfig)
+            ->map(function ($config, $status) use ($pengirimanStatus) {
+                return [
+                    'bg'     => $config['bg'],
+                    'icon'   => $config['icon'],
+                    'header' => 'Pengiriman ' . $status,
+                    'body'   => $pengirimanStatus->get($status, 0),
+                ];
+            })->values();
+
         /*
         |--------------------------------------------------------------------------
         | BUILD STATUS CARDS
@@ -334,15 +355,17 @@ class DashboardController extends Controller
                     'header' => 'Permintaan ' . $status,
                     'body'   => $permintaanStatus->get($status, 0),
                 ];
-            })->merge([
-                [
-                    'bg'     => '',
-                    'icon'   => '',
-                    'header' => '',
-                    'body'   => "",
-                    'hidden' => ""
-                ]
-            ])->values();
+            })
+            // ->merge([
+            //     [
+            //         'bg'     => '',
+            //         'icon'   => '',
+            //         'header' => '',
+            //         'body'   => "",
+            //         'hidden' => ""
+            //     ]
+            // ])
+            ->values();
 
         $stokCabang = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')
             ->limit(5)
@@ -380,7 +403,7 @@ class DashboardController extends Controller
                     'header' => 'Permintaan Bulan Ini',
                     'body'   => $totalPermintaanBulanIni,
                 ],
-            ])->merge($cardsStatusPermintaan),
+            ])->merge($cardsStatusPermintaan)->merge($cardsStatusPengiriman),
             'tables' => collect([
                 [
                     'id'    => 'stokMenipis',
@@ -525,6 +548,83 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | DISTRIBUSI STOK GUDANG PER JENIS
+        |--------------------------------------------------------------------------
+        */
+        $integrationDb = config('database.connections.mysqlIntegration.database');
+
+        $stokPerJenis = StokGudang::selectRaw("
+        tb_jenis.nama_jenis,
+        SUM(stok_gudang.stok_total) AS total_stok
+    ")
+            ->join("$integrationDb.tb_produk as tb_produk", 'tb_produk.id_produk', '=', 'stok_gudang.produk_id')
+            ->join("$integrationDb.tb_jenis as tb_jenis", 'tb_jenis.id_jenis', '=', 'tb_produk.id_jenis')
+            ->groupBy('tb_jenis.nama_jenis')
+            ->orderByDesc('total_stok')
+            ->get();
+
+        $topSuppliers = Supplier::withCount([
+            'purchaseOrders as total_po'
+        ])
+            ->withSum('purchaseOrders as total_nilai', 'total_po')
+            ->orderByDesc('total_po')
+            ->limit(5)
+            ->get();
+
+        $supplierRetur = Retur::join('purchase_order', 'retur.po_id', '=', 'purchase_order.po_id')
+            ->join('supplier', 'purchase_order.supplier_id', '=', 'supplier.supplier_id')
+            ->select(
+                'supplier.nama_supplier',
+                DB::raw('COUNT(retur.retur_id) as total_retur'),
+                DB::raw('SUM(retur.qty_retur) as total_qty')
+            )
+            ->groupBy('supplier.nama_supplier')
+            ->orderByDesc('total_retur')
+            ->limit(5)
+            ->get();
+
+        $stokCabang = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')
+            ->limit(5)
+            ->get();
+        $produkCabang = TbProduk::whereIn(
+            'id_produk',
+            $stokCabang->pluck('id_produk')
+        )->get();
+        $tabelStokMenipis = $stokCabang
+            ->map(function ($stok) use ($produkCabang) {
+                $produk = $produkCabang->firstWhere('id_produk', $stok->id_produk);
+
+                return [
+                    'nama_produk'  => $produk?->nama_produk ?? '-',
+                    'total_stok'   => $stok->total_stok,
+                    'stok_minimum' => $stok->stok_minimum,
+                    'status'       => $stok->total_stok <= $stok->stok_minimum,
+                ];
+            })
+            ->values();
+
+        $stokGudang = StokGudang::whereColumn('stok_total', '<=', 'stok_minimum')
+            ->limit(5)
+            ->get();
+        $produkGudang = TbProduk::whereIn(
+            'id_produk',
+            $stokGudang->pluck('produk_id')
+        )->get();
+        $tabelStokGudangMenipis = $stokGudang
+            ->map(function ($stok) use ($produkGudang) {
+                $produk = $produkGudang->firstWhere('id_produk', $stok->produk_id);
+
+                return [
+                    'nama_produk'  => $produk?->nama_produk ?? '-',
+                    'total_stok'   => $stok->stok_total,
+                    'stok_minimum' => $stok->stok_minimum,
+                    'status'       => $stok->stok_total <= $stok->stok_minimum,
+                ];
+            })
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
         | RETURN DASHBOARD DATA
         |--------------------------------------------------------------------------
         */
@@ -571,6 +671,32 @@ class DashboardController extends Controller
 
             'charts' => collect([
                 [
+                    'id'    => 'stokPerJenis',
+                    'type'  => 'doughnut',
+                    'title' => 'Jenis Stok Gudang',
+                    'data'  => [
+                        'labels' => $stokPerJenis->pluck('nama_jenis'),
+                        'datasets' => [[
+                            'data' => $stokPerJenis->pluck('total_stok'),
+                        ]],
+                    ],
+                    'options' => (object) [],
+                ],
+                [
+                    'id'    => 'statusPO',
+                    'type'  => 'doughnut',
+                    'title' => 'Status Purchase Order',
+                    'data'  => [
+                        'labels' => $statusPOChart->pluck('status_group'),
+                        'datasets' => [
+                            [
+                                'data' => $statusPOChart->pluck('total'),
+                            ],
+                        ],
+                    ],
+                    'options' => (object) [],
+                ],
+                [
                     'id'    => 'trendPembelian',
                     'type'  => 'line',
                     'title' => 'Tren Pembelian Bulanan',
@@ -604,21 +730,102 @@ class DashboardController extends Controller
                         ],
                     ],
                 ],
-                [
-                    'id'    => 'statusPO',
-                    'type'  => 'doughnut',
-                    'title' => 'Status Purchase Order',
-                    'data'  => [
-                        'labels' => $statusPOChart->pluck('status_group'),
-                        'datasets' => [
-                            [
-                                'data' => $statusPOChart->pluck('total'),
-                            ],
-                        ],
-                    ],
-                    'options' => (object) [],
-                ],
             ]),
+            'tables' => collect([
+                [
+                    'id'    => 'topSuppliers',
+                    'col'   => 6,
+                    'theme' => 'primary',
+                    'icon'  => 'truck',
+                    'title' => 'Top 5 Supplier',
+                    'headers' => [
+                        ['key' => 'nama_supplier', 'label' => 'Supplier'],
+                        ['key' => 'total_po', 'label' => 'Total PO'],
+                        ['key' => 'total_nilai', 'label' => 'Total Nilai'],
+                    ],
+                    'rows' => $topSuppliers->map(fn($row) => [
+                        'nama_supplier' => $row->nama_supplier,
+                        'total_po' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-info',
+                            'text'  => $row->total_po,
+                        ],
+                        'total_nilai' => 'Rp ' . number_format(
+                            $row->total_nilai ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ),
+                    ]),
+                    'empty_text' => 'Belum ada data supplier',
+                ],
+                [
+                    'id'    => 'topSupplierRetur',
+                    'col'   => 6,
+                    'theme' => 'warning',
+                    'icon'  => 'undo-alt',
+                    'title' => 'Top 5 Supplier Retur',
+                    'headers' => [
+                        ['key' => 'nama_supplier', 'label' => 'Supplier'],
+                        ['key' => 'total_retur', 'label' => 'Total Retur'],
+                        ['key' => 'total_qty', 'label' => 'Total Qty Retur'],
+                    ],
+                    'rows' => $supplierRetur->map(fn($row) => [
+                        'nama_supplier' => $row->nama_supplier,
+                        'total_retur' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-warning',
+                            'text'  => $row->total_retur,
+                        ],
+                        'total_qty' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-danger',
+                            'text'  => $row->total_qty,
+                        ],
+                    ]),
+                    'empty_text' => 'Belum ada data retur supplier',
+                ],
+                [
+                    'id'    => 'stokMenipis',
+                    'col'   => 6,
+                    'theme' => 'danger',
+                    'icon'  => 'exclamation-triangle',
+                    'title' => 'Stok Cabang Menipis',
+                    'headers' => [
+                        ['key' => 'nama_produk', 'label' => 'Produk'],
+                        ['key' => 'stok', 'label' => 'Stok'],
+                    ],
+                    'rows' => $tabelStokMenipis->map(fn($row) => [
+                        'nama_produk' => $row['nama_produk'],
+                        'stok' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-danger',
+                            'text'  => "{$row['total_stok']} / {$row['stok_minimum']}",
+                        ],
+                    ]),
+                    'empty_text' => 'Semua stok aman',
+                ],
+                [
+                    'id'    => 'stokGudangMenipis',
+                    'col'   => 6,
+                    'theme' => 'danger',
+                    'icon'  => 'exclamation-triangle',
+                    'title' => 'Stok Gudang Menipis',
+                    'headers' => [
+                        ['key' => 'nama_produk', 'label' => 'Produk'],
+                        ['key' => 'stok', 'label' => 'Stok'],
+                    ],
+                    'rows' => $tabelStokGudangMenipis->map(fn($row) => [
+                        'nama_produk' => $row['nama_produk'],
+                        'stok' => [
+                            'type'  => 'badge',
+                            'class' => 'badge-danger',
+                            'text'  => "{$row['total_stok']} / {$row['stok_minimum']}",
+                        ],
+                    ]),
+                    'empty_text' => 'Semua stok gudang aman',
+                ],
+            ])
         ]);
     }
 
