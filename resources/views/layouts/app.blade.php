@@ -288,8 +288,9 @@
                                 </a>
                             </li>
 
-                            <li class="{{ request()->routeIs('laporan.stok.gudang.*') ? 'active' : '' }}">
-                                <a class="nav-link" href="#">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Stok Gudang' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('laporan.stokgudang') }}">
                                     <i class="fas fa-warehouse"></i>
                                     <span>Stok Gudang</span>
                                 </a>
