@@ -262,45 +262,10 @@
 
                     @if (in_array(auth()->user()->role, ['Owner']))
                         <ul class="sidebar-menu">
-                            <li class="menu-header">Laporan</li>
-
-                            <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Purchase Order' ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('laporan.purchaseorder') }}">
+                            <li class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan' ? 'active' : '' }}">
+                                <a class="nav-link" href="{{ route('laporan') }}">
                                     <i class="fas fa-file-invoice"></i>
-                                    <span>Purchase Order</span>
-                                </a>
-                            </li>
-
-                            <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Retur' ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('laporan.retur') }}">
-                                    <i class="fas fa-undo"></i>
-                                    <span>Retur</span>
-                                </a>
-                            </li>
-
-                            <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Pengiriman' ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('laporan.pengiriman') }}">
-                                    <i class="fas fa-truck"></i>
-                                    <span>Pengiriman</span>
-                                </a>
-                            </li>
-
-                            <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Stok Gudang' ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('laporan.stokgudang') }}">
-                                    <i class="fas fa-warehouse"></i>
-                                    <span>Stok Gudang</span>
-                                </a>
-                            </li>
-
-                            <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan Stok Cabang' ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('laporan.stokcabang') }}">
-                                    <i class="fas fa-store"></i>
-                                    <span>Stok Cabang</span>
+                                    <span>Laporan</span>
                                 </a>
                             </li>
                         </ul>

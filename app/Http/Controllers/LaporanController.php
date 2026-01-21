@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Integrasi\TbProduk;
+use App\Models\Pengiriman;
+use App\Models\PermintaanCabang;
+use App\Models\PurchaseOrder;
+use App\Models\Retur;
+use App\Models\Supplier;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class LaporanController extends Controller
+{
+    public function index(Request $request)
+    {
+        $from   = $request->from;
+        $to     = $request->to;
+        $statusPO = $request->status_po;
+        $statusPengiriman = $request->status_pengiriman;
+
+        /* =========================
+         | BASE FILTER PO
+         ========================= */
+        $poQuery = PurchaseOrder::with('supplier');
+
+        if ($from && $to) {
+            $poQuery->whereBetween('tanggal_po', [$from, $to]);
+        }
+
+        if ($statusPO) {
+            $poQuery->where('status_po', $statusPO);
+        }
+
+        $laporanPO = $poQuery->get();
+
+        $totalNilaiPO = $laporanPO->sum('total_po');
+
+        /* =========================
+         | PO PER SUPPLIER
+         ========================= */
+        $laporanPOSupplier = Supplier::select(
+            'supplier.supplier_id',
+            'supplier.nama_supplier',
+            DB::raw('COUNT(purchase_order.po_id) as total_po')
+        )
+            ->leftJoin('purchase_order', 'purchase_order.supplier_id', '=', 'supplier.supplier_id')
+            ->when(
+                $from && $to,
+                fn($q) =>
+                $q->whereBetween('purchase_order.tanggal_po', [$from, $to])
+            )
+            ->when(
+                $statusPO,
+                fn($q) =>
+                $q->where('purchase_order.status_po', $statusPO)
+            )
+            ->groupBy('supplier.supplier_id', 'supplier.nama_supplier')
+            ->orderByDesc('total_po')
+            ->get();
+
+        /* =========================
+         | RETUR PER SUPPLIER
+         ========================= */
+        $laporanReturSupplier = Supplier::select(
+            'supplier.nama_supplier',
+            DB::raw('COUNT(retur.retur_id) as total_retur')
+        )
+            ->leftJoin('purchase_order', 'purchase_order.supplier_id', '=', 'supplier.supplier_id')
+            ->leftJoin('retur', 'retur.po_id', '=', 'purchase_order.po_id')
+            ->when(
+                $from && $to,
+                fn($q) =>
+                $q->whereBetween('retur.tanggal_retur', [$from, $to])
+            )
+            ->groupBy('supplier.nama_supplier')
+            ->orderByDesc('total_retur')
+            ->get();
+
+        /* =========================
+         | PENGIRIMAN
+         ========================= */
+        $laporanPengiriman = Pengiriman::select(
+            'status_pengiriman',
+            DB::raw('COUNT(*) as total')
+        )
+            ->when(
+                $from && $to,
+                fn($q) =>
+                $q->whereBetween('tanggal_kirim', [$from, $to])
+            )
+            ->when(
+                $statusPengiriman,
+                fn($q) =>
+                $q->where('status_pengiriman', $statusPengiriman)
+            )
+            ->groupBy('status_pengiriman')
+            ->get();
+
+        /* =========================
+         | PRODUK PER JENIS
+         ========================= */
+        $laporanProduk = TbProduk::select(
+            'id_jenis',
+            DB::raw('COUNT(id_produk) as total_produk')
+        )
+            ->with('jenis')
+            ->groupBy('id_jenis')
+            ->get();
+
+        /* =========================
+         | PERMINTAAN CABANG
+         ========================= */
+        $laporanPermintaanCabang = PermintaanCabang::select(
+            'cabang_id',
+            DB::raw('COUNT(permintaan_id) as total_permintaan')
+        )
+            ->when(
+                $from && $to,
+                fn($q) =>
+                $q->whereBetween('tanggal_permintaan', [$from, $to])
+            )
+            ->groupBy('cabang_id')
+            ->get();
+
+        return view('laporan.index', compact(
+            'laporanPO',
+            'totalNilaiPO',
+            'laporanPOSupplier',
+            'laporanReturSupplier',
+            'laporanPengiriman',
+            'laporanProduk',
+            'laporanPermintaanCabang'
+        ));
+    }
+
+    /* =========================
+     | GENERATE PDF
+     ========================= */
+    public function exportPdf(Request $request)
+    {
+        // pakai logic yang sama dengan index
+        $data = $this->index($request)->getData();
+
+        $pdf = PDF::loadView('laporan.pdf', (array) $data)
+            ->setPaper('A4', 'portrait');
+
+        return $pdf->stream('laporan.pdf');
+    }
+}
