@@ -61,6 +61,15 @@ class LaporanController extends Controller
             ->orderByDesc('total_po')
             ->get();
 
+        $laporanRetur = Retur::with([
+            'purchaseOrder.supplier',
+            'tb_payment'
+        ])->when($request->from && $request->to, function ($q) use ($request) {
+            $q->whereBetween('tanggal_retur', [$request->from, $request->to]);
+        })->when($request->status_retur, function ($q) use ($request) {
+            $q->where('status_retur', $request->status_retur);
+        })->orderBy('tanggal_retur', 'desc')->get();
+
         /* =========================
          | RETUR PER SUPPLIER
          ========================= */
@@ -129,6 +138,7 @@ class LaporanController extends Controller
             'laporanPO',
             'totalNilaiPO',
             'laporanPOSupplier',
+            'laporanRetur',
             'laporanReturSupplier',
             'laporanPengiriman',
             'laporanProduk',

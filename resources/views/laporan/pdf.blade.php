@@ -52,13 +52,27 @@
 
 <body>
 
-    <h2 class="text-center">LAPORAN PURCHASE ORDER</h2>
-    <p class="text-center">
+    <h2 style="text-align:center; margin-bottom:2px;">AYU MART</h2>
+
+    <h6 style="text-align:center; margin-top:0; margin-bottom:6px;">
+        LAPORAN PENJUALAN
+    </h6>
+
+    <p style="text-align:center; margin:4px 0;">
         Periode:
-        {{ request('from') ?? '-' }}
-        s/d
-        {{ request('to') ?? '-' }}
+        @if (request('from') && request('to'))
+            {{ request('from') }} s/d {{ request('to') }}
+        @else
+            {{ request('from') ?? (request('to') ?? now()->format('F Y')) }}
+        @endif
     </p>
+
+    <p style="text-align:center; font-size:10px; margin-top:2px;">
+        Dicetak pada: {{ now()->format('d-m-Y H:i:s') }}
+    </p>
+
+    <hr style="margin:8px 0;">
+
 
     {{-- ================= LAPORAN PO ================= --}}
     <div class="section">
@@ -128,9 +142,57 @@
         </table>
     </div>
 
+    {{-- ================= LAPORAN RETUR ================= --}}
+    <div class="section">
+        <h3>3. Laporan Retur</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th width="4%">#</th>
+                    <th width="12%">Tanggal</th>
+                    <th width="15%">Kode PO</th>
+                    <th>Supplier</th>
+                    <th width="10%">Qty</th>
+                    <th width="15%">Status</th>
+                    <th width="15%">Alasan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($laporanRetur as $i => $r)
+                    <tr>
+                        <td class="text-center">{{ $i + 1 }}</td>
+                        <td>{{ $r->tanggal_retur }}</td>
+                        <td>{{ $r->purchaseOrder->kode_po ?? '-' }}</td>
+                        <td>{{ $r->purchaseOrder->supplier->nama_supplier ?? '-' }}</td>
+                        <td class="text-right">{{ $r->qty_retur }}</td>
+                        <td class="text-center">{{ $r->status_retur }}</td>
+                        <td class="text-center">
+                            {{ $r->alasan }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            Data retur tidak tersedia
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+            {{-- <tfoot>
+                <tr class="footer-total">
+                    <td colspan="4">Total Qty Retur</td>
+                    <td class="text-right">{{ $totalQtyRetur }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot> --}}
+        </table>
+    </div>
+
+
     {{-- ================= RETUR ================= --}}
     <div class="section">
-        <h3>3. Retur per Supplier</h3>
+        <h3>4. Retur per Supplier</h3>
 
         <table>
             <thead>
@@ -154,7 +216,7 @@
 
     {{-- ================= PENGIRIMAN ================= --}}
     <div class="section">
-        <h3>4. Status Pengiriman</h3>
+        <h3>5. Status Pengiriman</h3>
 
         <table>
             <thead>
@@ -184,7 +246,7 @@
 
     {{-- ================= PRODUK ================= --}}
     <div class="section">
-        <h3>5. Produk</h3>
+        <h3>6. Produk</h3>
 
         <table>
             <thead>
@@ -206,7 +268,7 @@
 
     {{-- ================= PERMINTAAN CABANG ================= --}}
     <div class="section">
-        <h3>6. Permintaan Cabang</h3>
+        <h3>7. Permintaan Cabang</h3>
 
         <table>
             <thead>

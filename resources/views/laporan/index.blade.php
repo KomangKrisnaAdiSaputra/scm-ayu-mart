@@ -153,6 +153,67 @@
             </div>
         </div>
 
+        {{-- ================= LAPORAN RETUR ================= --}}
+        <div class="row">
+            <div class="col-12 col-md-12 col-lg-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Laporan Retur</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-md">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Tanggal Retur</th>
+                                        <th>Kode PO</th>
+                                        <th>Supplier</th>
+                                        <th>Qty Retur</th>
+                                        <th>Status</th>
+                                        <th>Alasan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($laporanRetur as $i => $r)
+                                        <tr>
+                                            <td>{{ $i + 1 }}</td>
+                                            <td>{{ $r->tanggal_retur }}</td>
+                                            <td>{{ $r->purchaseOrder->kode_po ?? '-' }}</td>
+                                            <td>{{ $r->purchaseOrder->supplier->nama_supplier ?? '-' }}</td>
+                                            <td align="right">{{ $r->qty_retur }}</td>
+                                            <td>
+                                                <span class="badge badge-warning">
+                                                    {{ $r->status_retur }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {{ $r->alasan }}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                Data retur tidak tersedia
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                                {{-- <tfoot>
+                                    <tr>
+                                        <td colspan="4">Total Qty Retur</td>
+                                        <td align="right"><strong>{{ $totalQtyRetur }}</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot> --}}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         {{-- ================= RETUR SUPPLIER ================= --}}
         <div class="row">
             <div class="col-12 col-md-12 col-lg-12">

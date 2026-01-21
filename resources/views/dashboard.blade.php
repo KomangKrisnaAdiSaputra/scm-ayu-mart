@@ -194,13 +194,14 @@
                             labels: item.chart.labels,
                             datasets: [{
                                 data: item.chart.data,
-                                backgroundColor: [
-                                    '#6777ef', // primary
-                                    '#3abaf4', // info
-                                    '#63ed7a', // success
-                                    '#ffa426',
-                                    '#fc544b',
-                                ],
+                                backgroundColor: item.chart.colors,
+                                // backgroundColor: [
+                                //     '#6777ef', // primary
+                                //     '#3abaf4', // info
+                                //     '#63ed7a', // success
+                                //     '#ffa426',
+                                //     '#fc544b',
+                                // ],
                             }],
                         },
                         options: {

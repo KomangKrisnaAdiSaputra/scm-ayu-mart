@@ -1360,6 +1360,12 @@ class DashboardController extends Controller
             ])
             ->values();
 
+        $statusPengiriman = Pengiriman::all()->groupBy('status_pengiriman')
+            ->map(fn($items, $status) => [
+                'status' => $status,
+                'total'  => $items->count(),
+            ])->values();
+
         // ===============================
         // RETUR (DONUT)
         // ===============================
@@ -1545,7 +1551,7 @@ class DashboardController extends Controller
 
             [
                 'type' => 'charts',
-                'per_row' => 2,
+                'per_row' => 3,
                 'items' => [
                     [
                         'id' => 'trendPembelian',
@@ -1566,6 +1572,17 @@ class DashboardController extends Controller
                         'data' => [
                             'labels' => $labels,
                             'datasets' => $datasets,
+                        ],
+                    ],
+                    [
+                        'id' => 'statusPengiriman',
+                        'type' => 'line',
+                        'title' => 'Status Pengiriman',
+                        'data' => [
+                            'labels' => $statusPengiriman->pluck('status'),
+                            'datasets' => [
+                                ['label' => 'Jumlah Pengiriman', 'data' => $statusPengiriman->pluck('total')],
+                            ],
                         ],
                     ],
                 ],
