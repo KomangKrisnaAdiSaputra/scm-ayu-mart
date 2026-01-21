@@ -312,6 +312,18 @@ class DashboardController extends Controller
             ->values();
 
         // ===============================
+        // JENIS RETUR (DONUT)
+        // ===============================
+        $jenisRetur = $retur
+            ->groupBy('payment')
+            ->map(fn($items, $key) => [
+                'jenis' => $key == 1 ? 'Dikembalikan Barang' : 'Dikembalikan Dana',
+                'total'  => $items->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        // ===============================
         // ALASAN RETUR (DONUT)
         // ===============================
         $alasanRetur = $retur
@@ -354,7 +366,7 @@ class DashboardController extends Controller
             // ===== DONUT =====
             [
                 'type'    => 'donut',
-                'per_row' => 3,
+                'per_row' => 4,
                 'items'   => [
                     [
                         'id'    => 'statusPO',
@@ -373,6 +385,24 @@ class DashboardController extends Controller
                             'icon'  => 'clipboard-check',
                         ]),
                     ],
+                    [
+                        'id'    => 'jenisRetur',
+                        'title' => 'Jenis Retur Supplier',
+                        'chart' => [
+                            'labels' => $jenisRetur->pluck('jenis'),
+                            'data'   => $jenisRetur->pluck('total'),
+                            'colors' => $jenisRetur->values()->map(
+                                fn($_, $i) => $donutColors[$i % count($donutColors)]
+                            ),
+                        ],
+                        'details' => $jenisRetur->values()->map(fn($r, $i) => [
+                            'label' => $r['jenis'],
+                            'value' => $r['total'],
+                            'color' => $donutColors[$i % count($donutColors)],
+                            'icon'  => 'undo-alt',
+                        ]),
+                    ],
+
                     [
                         'id'    => 'alasanRetur',
                         'title' => 'Alasan Retur Supplier',
