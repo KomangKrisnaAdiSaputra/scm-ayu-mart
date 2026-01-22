@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Integrasi\TbCabang;
 use App\Models\Integrasi\TbProduk;
 use App\Models\Pengiriman;
 use App\Models\PermintaanCabang;
 use App\Models\PurchaseOrder;
 use App\Models\Retur;
+use App\Models\StatusKurir;
 use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -91,22 +93,15 @@ class LaporanController extends Controller
         /* =========================
          | PENGIRIMAN
          ========================= */
-        $laporanPengiriman = Pengiriman::select(
-            'status_pengiriman',
-            DB::raw('COUNT(*) as total')
-        )
-            ->when(
-                $from && $to,
-                fn($q) =>
-                $q->whereBetween('tanggal_kirim', [$from, $to])
-            )
-            ->when(
-                $statusPengiriman,
-                fn($q) =>
-                $q->where('status_pengiriman', $statusPengiriman)
-            )
-            ->groupBy('status_pengiriman')
-            ->get();
+        $laporanPengiriman = StatusKurir::select('status_kurir', DB::raw('COUNT(*) as total'))->whereIn('status_kurir', ['Terkirim', 'Gagal'])
+            ->whereHas(
+                'pengiriman',
+                fn($q) => $q->when($from && $to, fn($q) => $q->whereBetween('tanggal_kirim', [$from, $to]))->when(
+                    $statusPengiriman,
+                    fn($q) =>
+                    $q->where('status_pengiriman', $statusPengiriman)
+                )
+            )->groupBy('status_kurir')->get();
 
         /* =========================
          | PRODUK PER JENIS
@@ -122,17 +117,20 @@ class LaporanController extends Controller
         /* =========================
          | PERMINTAAN CABANG
          ========================= */
+
+        $allCabang = TbCabang::all();
         $laporanPermintaanCabang = PermintaanCabang::select(
             'cabang_id',
             DB::raw('COUNT(permintaan_id) as total_permintaan')
-        )
-            ->when(
-                $from && $to,
-                fn($q) =>
-                $q->whereBetween('tanggal_permintaan', [$from, $to])
-            )
-            ->groupBy('cabang_id')
-            ->get();
+        )->when(
+            $from && $to,
+            fn($q) =>
+            $q->whereBetween('tanggal_permintaan', [$from, $to])
+        )->groupBy('cabang_id')->get()->map(function ($item) use ($allCabang) {
+            $cabang = $allCabang->firstWhere('id_cabang', $item->cabang_id);
+            $item->nama_cabang = $cabang ? $cabang->nama_cabang : 'Unknown';
+            return $item;
+        });
 
         return view('laporan.index', compact(
             'laporanPO',

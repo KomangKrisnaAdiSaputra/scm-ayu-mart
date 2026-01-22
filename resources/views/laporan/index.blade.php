@@ -263,7 +263,7 @@
                             <tbody>
                                 @foreach ($laporanPengiriman as $row)
                                     <tr>
-                                        <td>{{ $row->status_pengiriman }}</td>
+                                        <td>{{ $row->status_kurir }}</td>
                                         <td align="right">{{ $row->total }}</td>
                                     </tr>
                                 @endforeach
@@ -327,7 +327,7 @@
                             <tbody>
                                 @foreach ($laporanPermintaanCabang as $row)
                                     <tr>
-                                        <td>{{ $row->cabang_id }}</td>
+                                        <td>{{ $row->nama_cabang }}</td>
                                         <td align="right">{{ $row->total_permintaan }}</td>
                                     </tr>
                                 @endforeach

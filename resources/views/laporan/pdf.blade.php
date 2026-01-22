@@ -55,7 +55,7 @@
     <h2 style="text-align:center; margin-bottom:2px;">AYU MART</h2>
 
     <h6 style="text-align:center; margin-top:0; margin-bottom:6px;">
-        LAPORAN PENJUALAN
+        LAPORAN INVENTORY
     </h6>
 
     <p style="text-align:center; margin:4px 0;">
@@ -228,7 +228,7 @@
             <tbody>
                 @foreach ($laporanPengiriman as $row)
                     <tr>
-                        <td>{{ $row->status_pengiriman }}</td>
+                        <td>{{ $row->status_kurir }}</td>
                         <td class="text-right">{{ $row->total }}</td>
                     </tr>
                 @endforeach
@@ -280,7 +280,7 @@
             <tbody>
                 @foreach ($laporanPermintaanCabang as $row)
                     <tr>
-                        <td>{{ $row->cabang_id }}</td>
+                        <td>{{ $row->nama_cabang }}</td>
                         <td class="text-right">{{ $row->total_permintaan }}</td>
                     </tr>
                 @endforeach
