@@ -3,7 +3,7 @@
 
 @php
     $breadcrumbs = [
-        ['label' => 'Pemintaan Cabang', 'url' => route('permintaancabang'), 'active' => 'active'],
+        ['label' => 'Purchase Order', 'url' => route('purchaseorder'), 'active' => 'active'],
         ['label' => 'Form Permintaan', 'url' => '', 'active' => ''],
     ];
 @endphp

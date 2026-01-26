@@ -36,13 +36,15 @@ class DashboardController extends Controller
 
     function dashSupplier()
     {
+        $userLogin = auth()->user();
+        $supplier = Supplier::where('users_id', $userLogin->users_id)->first();
         $periodeTahun = now()->year;
 
         // ===============================
         // BASE DATA
         // ===============================
-        $purchaseOrders = PurchaseOrder::all();
-        $retur = Retur::whereYear('tanggal_retur', $periodeTahun)->get();
+        $purchaseOrders = PurchaseOrder::where('supplier_id', $supplier->supplier_id)->get();
+        $retur = Retur::with('purchaseOrder')->whereHas('purchaseOrder', fn($query) => $query->where('supplier_id', $supplier->supplier_id))->whereYear('tanggal_retur', $periodeTahun)->get();
 
         // ===============================
         // SUMMARY
@@ -364,7 +366,7 @@ class DashboardController extends Controller
     | STOK MENIPIS
     |------------------------------------------------------------------
     */
-        $stokCabang = TbStokCabang::whereColumn('total_stok', '<=', 'stok_minimum')
+        $stokCabang = TbStokCabang::where("id_cabang", $cabang?->id_cabang)->whereColumn('total_stok', '<=', 'stok_minimum')
             ->limit(5)
             ->get();
 

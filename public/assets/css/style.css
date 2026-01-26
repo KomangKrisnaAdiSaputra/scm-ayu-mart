@@ -470,7 +470,9 @@ select.form-control:not([size]):not([multiple]) {
     position: relative;
     vertical-align: bottom;
     border: 1px solid rgba(0, 40, 100, 0.12);
-    transition: 0.3s border-color, 0.3s background-color;
+    transition:
+        0.3s border-color,
+        0.3s background-color;
 }
 .custom-switch-indicator:before {
     content: "";
@@ -3887,12 +3889,12 @@ body.layout-3 .main-footer {
     width: 100%;
 }
 .main-sidebar .sidebar-menu li a:hover {
-    background-color: #f8fafb;
+    background-color: #7fa08e;
 }
 .main-sidebar .sidebar-menu li.active a {
-    color: #3f4f44;
+    color: white;
     font-weight: 600;
-    background-color: #f8fafb;
+    background-color: #6f8f7e;
 }
 .main-sidebar .sidebar-menu li.active a.has-dropdown:after {
     transform: translate(0, -50%) rotate(90deg);

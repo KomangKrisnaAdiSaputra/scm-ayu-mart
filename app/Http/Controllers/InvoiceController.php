@@ -50,13 +50,14 @@ class InvoiceController extends Controller
             return back()->with('error', 'Invoice sudah lunas');
         }
 
-
         $request->validate([
             'jumlah_bayar'      => 'required|numeric|min:1',
             'tanggal_bayar'     => 'required|date|before_or_equal:today',
             'metode_bayar'      => 'required|string|max:50',
             'bukti_pembayaran'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
+
+        dd($request->all());
 
         DB::transaction(function () use ($request, $invoice) {
 

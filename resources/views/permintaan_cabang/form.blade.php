@@ -95,9 +95,9 @@
                 </select>
             </td>
             <td>
-                <input type="number" name="produk[${index}][qty]" class="form-control" min="1" required>
+                <input type="number" name="produk[${index}][qty]" class="form-control text-center" min="1" required>
             </td>
-            <td>
+            <td class="text-center">
                 <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
             </td>
         </tr>`;

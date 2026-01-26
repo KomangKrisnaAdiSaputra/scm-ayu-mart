@@ -19,17 +19,14 @@ class ReturController extends Controller
         $retur = Retur::with([
             'purchaseOrder',
             'tb_payment'
-        ])
-            ->when($search, function ($q) use ($search) {
-                $q->whereHas('produk', function ($qp) use ($search) {
-                    $qp->where('nama_produk', 'like', "%$search%")
-                        ->orWhere('kode_produk', 'like', "%$search%");
-                })
-                    ->orWhereHas('purchaseOrder', function ($qp) use ($search) {
-                        $qp->where('kode_po', 'like', "%$search%");
-                    })
-                    ->orWhere('status_retur', 'like', "%$search%");
-            })
+        ])->when($search, function ($q) use ($search) {
+            $q->whereHas('produk', function ($qp) use ($search) {
+                $qp->where('nama_produk', 'like', "%$search%")
+                    ->orWhere('kode_produk', 'like', "%$search%");
+            })->orWhereHas('purchaseOrder', function ($qp) use ($search) {
+                $qp->where('kode_po', 'like', "%$search%");
+            })->orWhere('status_retur', 'like', "%$search%");
+        })->whereHas('purchaseOrder.suplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
             ->orderBy('tanggal_retur', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -43,6 +40,7 @@ class ReturController extends Controller
     function create()
     {
         $poList = PurchaseOrder::where('status_po', 'Dikirim Supplier')
+            ->whereHas('supplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
             ->orderBy('tanggal_po', 'desc')
             ->get();
         $allProduk = TbProduk::all();
@@ -323,7 +321,7 @@ class ReturController extends Controller
             /**
              * 1️⃣ Hitung qty masuk gudang
              */
-            $qtyMasukGudang = $qtyPo;
+            $qtyMasukGudang = $qtyPo + $qtyRetur;
 
             /**
              * 2️⃣ Tambah stok gudang

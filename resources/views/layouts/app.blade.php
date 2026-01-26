@@ -54,9 +54,33 @@
         textarea {
             height: 50px !important;
         }
-    </style>
 
+        .navbar-bg,
+        .main-navbar {
+            background-color: white !important;
+        }
 
+        .main-navbar .navbar-nav .nav-link {
+            color: black !important;
+        }
+
+        .section-header,
+        .main-sidebar {
+            background-color: #4F6256 !important;
+        }
+
+        .section-header .breadcrumb-item::before,
+        .section-header .breadcrumb-item a,
+        .section-header .breadcrumb-item,
+        .section-header .breadcrumb-item.active,
+        .section-header h1,
+        .main-sidebar .sidebar-brand a {
+            color: white !important;
+        }
+
+        .textwhite a {
+            color: white !important;
+        }
     </style>
     @yield('css')
 </head>
@@ -152,7 +176,8 @@
                     </div>
                     <ul class="sidebar-menu">
                         {{-- <li class="menu-header">Dashboard</li> --}}
-                        <li class="{{ trim($__env->yieldContent('titlePage')) === 'Dashboard' ? 'active' : '' }}">
+                        <li
+                            class="{{ trim($__env->yieldContent('titlePage')) === 'Dashboard' ? 'active' : 'textwhite' }}">
                             <a class="nav-link" href="{{ route('dashboard') }}">
                                 <i class="fas fa-fire"></i>
                                 <span>Dashboard</span>
@@ -164,7 +189,7 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen Produk' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('produk') }}">
                                     <i class="fas fa-boxes"></i>
                                     <span>Manajemen Produk</span>
@@ -177,7 +202,7 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen User' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Manajemen User' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('usermanagement') }}">
                                     <i class="fas fa-users"></i>
                                     <span>Manajemen User</span>
@@ -190,7 +215,7 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Permintaan Cabang' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('permintaancabang') }}">
                                     <i class="fas fa-clipboard-list"></i>
                                     <span>Permintaan Cabang</span>
@@ -202,7 +227,8 @@
                     @if (in_array(auth()->user()->role, ['Gudang', 'Cabang', 'Kurir']))
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
-                            <li class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : '' }}">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Pengiriman' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('pengiriman') }}">
                                     <i class="fas fa-truck"></i>
                                     <span>Pengiriman</span>
@@ -215,7 +241,7 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Purchase Order' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Purchase Order' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('purchaseorder') }}">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Purchase Order</span>
@@ -225,7 +251,8 @@
 
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
-                            <li class="{{ trim($__env->yieldContent('titlePage')) === 'Retur' ? 'active' : '' }}">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Retur' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('retur') }}">
                                     <i class="fas fa-undo-alt"></i>
                                     <span>Retur</span>
@@ -238,7 +265,7 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Payment List' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Payment List' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('paymentlist') }}">
                                     <i class="fas fa-credit-card"></i>
                                     <span>Payment List</span>
@@ -251,9 +278,9 @@
                         <ul class="sidebar-menu">
                             {{-- <li class="menu-header">Dashboard</li> --}}
                             <li
-                                class="{{ trim($__env->yieldContent('titlePage')) === 'Jenis Produk' ? 'active' : '' }}">
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Jenis Produk' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('jenisproduk') }}">
-                                    <i class="fas fa-credit-card"></i>
+                                    <i class="fas fa-tags"></i>
                                     <span>Jenis Produk</span>
                                 </a>
                             </li>
@@ -262,7 +289,8 @@
 
                     @if (in_array(auth()->user()->role, ['Owner']))
                         <ul class="sidebar-menu">
-                            <li class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan' ? 'active' : '' }}">
+                            <li
+                                class="{{ trim($__env->yieldContent('titlePage')) === 'Laporan' ? 'active' : 'textwhite' }}">
                                 <a class="nav-link" href="{{ route('laporan') }}">
                                     <i class="fas fa-file-invoice"></i>
                                     <span>Laporan</span>

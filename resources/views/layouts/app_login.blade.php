@@ -18,6 +18,12 @@
     <!-- Template CSS -->
     <link rel="stylesheet" href="{{ asset('../assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('../assets/css/components.css') }}">
+
+    <style>
+        body {
+            background-color: #4F6256 !important;
+        }
+    </style>
 </head>
 
 <body>

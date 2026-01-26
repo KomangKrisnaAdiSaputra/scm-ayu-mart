@@ -72,7 +72,7 @@
                             </form>
                         </div>
                     </div>
-                    <div class="simple-footer">
+                    <div class="simple-footer" style="color: white;">
                         Copyright &copy; {{ config('app.name') }} 2025
                     </div>
                 </div>

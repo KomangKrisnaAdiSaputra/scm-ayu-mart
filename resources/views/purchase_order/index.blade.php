@@ -466,10 +466,14 @@
                         document.getElementById('catatan_manajer').value = payment
                             .catatan_manajer ?? '';
 
+                        const fileInput = document.querySelector('input[name="bukti_pembayaran"]');
                         if (payment.bukti_pembayaran) {
                             document.getElementById('bukti_preview').href = '/' + payment
                                 .bukti_pembayaran;
                             buktiWrapper.classList.remove('d-none');
+                            fileInput.required = false;
+                        } else {
+                            fileInput.required = true;
                         }
 
                         /* SUPPLIER */
@@ -685,18 +689,18 @@
 
                     <div class="form-group">
                         <label>Tanggal Bayar</label>
-                        <input type="date" name="tanggal_bayar" class="form-control">
+                        <input type="date" name="tanggal_bayar" class="form-control" required>
                     </div>
 
                     <div class="form-group">
                         <label>Jumlah Bayar</label>
                         <input type="text" id="jumlah_bayar_view" class="form-control" readonly>
-                        <input type="hidden" id="jumlah_bayar" name="jumlah_bayar">
+                        <input type="hidden" id="jumlah_bayar" name="jumlah_bayar" required>
                     </div>
 
                     <div class="form-group">
                         <label>Metode</label>
-                        <select name="metode_bayar" id="metode_bayar" class="form-control">
+                        <select name="metode_bayar" id="metode_bayar" class="form-control" required>
                             <option value="">Pilih</option>
                             <option>Transfer Bank</option>
                             <option>Cash</option>
@@ -721,7 +725,7 @@
 
                     <div class="form-group">
                         <label>Upload Bukti</label>
-                        <input type="file" name="bukti_pembayaran" class="form-control-file">
+                        <input type="file" name="bukti_pembayaran" class="form-control-file" required>
                     </div>
 
                     <div class="form-group">
