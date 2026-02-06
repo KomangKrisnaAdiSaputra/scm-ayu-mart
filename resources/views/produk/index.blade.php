@@ -2,7 +2,7 @@
 @section('titlePage', 'Manajemen Produk')
 
 @php
-    $roleManajer = auth()->user()->role == 'Manajer';
+    $roleManajer = in_array(auth()->user()->role, ['Manajer']);
 @endphp
 
 @section('css')
@@ -58,7 +58,7 @@
                                 @else
                                     <th>Harga</th>
                                 @endif
-                                @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Cabang']))
+                                @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Cabang', 'Purchasing']))
                                     <th>Stok</th>
                                 @endif
                                 <th>Status</th>
@@ -77,7 +77,7 @@
                                         <td>{{ $item->harga_beli }}</td>
                                     @endif
                                     <td>{{ $item->harga_produk }}</td>
-                                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Purchasing']))
                                         <td>
                                             @php
                                                 $stokTotal = $stokGudang?->stok_total ?? 0;
@@ -374,7 +374,7 @@
                     </tr>
 
                     {{-- STOK GUDANG --}}
-                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang']))
+                    @if (in_array(auth()->user()->role, ['Manajer', 'Gudang', 'Purchasing']))
                         <tr class="table-secondary">
                             <th colspan="2">Stok Gudang Pusat</th>
                         </tr>

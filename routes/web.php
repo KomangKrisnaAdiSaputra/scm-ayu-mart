@@ -37,7 +37,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::middleware(['role:Manajer|Gudang|Cabang'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Cabang|Purchasing'])->prefix('produk')->name('produk')->controller(ProdukController::class)->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::post('/stok/cabang/{id}', 'saveStokCabang')->name('.stokcabang');
@@ -66,7 +66,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('purchase-order')->name('purchaseorder')->controller(PurchaseOrderController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier|Purchasing'])->prefix('purchase-order')->name('purchaseorder')->controller(PurchaseOrderController::class)->group(function () {
         Route::get('/create',  'create')->name('.create');
         Route::get('/{po}/edit',  'edit')->name('.edit');
         Route::post('/store',  'store')->name('.store');
@@ -76,13 +76,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier|Purchasing'])->prefix('invoice')->name('invoice')->controller(InvoiceController::class)->group(function () {
         Route::post('/create/{poId}', 'createFromPo')->name('.create');
         Route::post('/payment/{invoiceId}', 'savePayment')->name('.payment');
         Route::post('/reject/{invoiceId}', 'reject')->name('.reject');
     });
 
-    Route::middleware(['role:Manajer|Gudang|Supplier'])->prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
+    Route::middleware(['role:Manajer|Gudang|Supplier|Purchasing'])->prefix('retur')->name('retur')->controller(ReturController::class)->group(function () {
         Route::post('{id}/tolak', 'tolak')->name('.tolak');
         Route::post('{id}/terima', 'terimaRetur')->name('.terima');
 
@@ -97,7 +97,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', 'index');
     });
 
-    Route::middleware(['role:Manajer|Supplier'])->prefix('payment-list')->name('paymentlist')->controller(PaymentListController::class)->group(function () {
+    Route::middleware(['role:Purchasing|Supplier'])->prefix('payment-list')->name('paymentlist')->controller(PaymentListController::class)->group(function () {
         Route::delete('delete{id}', 'destroy')->name('.delete');
         Route::post('save/{id?}', 'save')->name('.save');
         Route::get('form/{id?}', 'form')->name('.form');

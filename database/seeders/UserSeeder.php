@@ -32,6 +32,15 @@ class UserSeeder extends Seeder
         ]);
 
         User::create([
+            'username' => 'purchasing',
+            'password' => Hash::make('123456'),
+            'role' => 'Purchasing',
+            'nama' => 'Purchasing Ayu Mart',
+            'email' => 'purchasing@ayu.com',
+            'is_active' => 1
+        ]);
+
+        User::create([
             'username' => 'gudang',
             'password' => Hash::make('123456'),
             'role' => 'Gudang',

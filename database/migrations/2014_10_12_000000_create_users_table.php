@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('users_id');
             $table->string('username', 50)->unique();
             $table->string('password', 60);
-            $table->enum('role', ['Manajer', 'Owner', 'Gudang', 'Cabang', 'Supplier', 'Kurir']);
+            $table->enum('role', ['Manajer', 'Owner', 'Purchasing', 'Gudang', 'Cabang', 'Supplier', 'Kurir']);
             $table->string('nama', 100);
             $table->string('email', 30)->unique();
             $table->boolean('is_active')->default(1);

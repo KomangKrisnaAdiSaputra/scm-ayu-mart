@@ -41,6 +41,8 @@ class PurchaseOrder extends Model
             $q->whereIn('status_po', [
                 'Draft',
                 'Menunggu Persetujuan',
+                'Disetujui Purchasing',
+                'Ditolak Purchasing',
                 'Disetujui Manajer',
                 'Ditolak Manajer',
                 'Diterima Supplier',
@@ -49,9 +51,22 @@ class PurchaseOrder extends Model
                 'Retur',
                 'Selesai'
             ]);
-        } else if ($role === 'Manajer') {
+        } else if ($role === 'Purchasing') {
             $q->whereIn('status_po', [
                 'Menunggu Persetujuan',
+                'Disetujui Purchasing',
+                'Ditolak Purchasing',
+                'Disetujui Manajer',
+                'Ditolak Manajer',
+                'Diterima Supplier',
+                'Ditolak Supplier',
+                'Dikirim Supplier',
+                'Selesai',
+                'Retur',
+            ]);
+        } else if ($role === 'Manajer') {
+            $q->whereIn('status_po', [
+                'Disetujui Purchasing',
                 'Disetujui Manajer',
                 'Ditolak Manajer',
                 'Diterima Supplier',

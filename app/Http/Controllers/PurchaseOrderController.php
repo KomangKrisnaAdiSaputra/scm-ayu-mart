@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DetailPermintaanCabang;
 use App\Models\DetailPurchaseOrder;
+use App\Models\Integrasi\TbCabang;
 use App\Models\Integrasi\TbProduk;
 use App\Models\PaymentList;
+use App\Models\PermintaanCabang;
 use App\Models\Produk;
 use App\Models\PurchaseOrder;
 use App\Models\StokGudang;
@@ -31,10 +34,52 @@ class PurchaseOrderController extends Controller
             ->orderBy('tanggal_po', 'desc')
             ->get();
 
-        $allProduk = TbProduk::all();
+        $allCabang = TbCabang::all();
+        $stokGudang = StokGudang::all();
+        $produkIds = $po
+            ->pluck('detail')
+            ->flatten()
+            ->pluck('produk_id')
+            ->unique()
+            ->values();
+        $permintaanCabang = PermintaanCabang::with(["detail"])->whereHas("detail", fn($q) => $q->wherein("produk_id", $produkIds))->get();
+
+        $allProduk = TbProduk::all()->map(function ($item) use ($permintaanCabang, $po) {
+            $qtyMasuk = $po
+                ->where('status_po', 'Selesai')
+                ->flatMap(fn($po) => $po->detail)
+                ->groupBy('produk_id')
+                ->map(fn($items) => $items->sum('qty'));
+            $qtyKeluar = $permintaanCabang
+                ->where('status_permintaan', 'Diterima')
+                ->flatMap(fn($pc) => $pc->detail)
+                ->groupBy('produk_id')
+                ->map(fn($items) => $items->sum('qty_permintaan'));
+
+            return [
+                ...$item->toArray(),
+                "qty_masuk" => $qtyMasuk[$item->id_produk] ?? 0,
+                "qty_keluar" => $qtyKeluar[$item->id_produk] ?? 0,
+            ];
+        });
+
+        $allCabang = TbCabang::all()->map(function ($item) use ($permintaanCabang) {
+
+            $result = $permintaanCabang
+                ->where('cabang_id', $item->id_cabang)
+                ->flatMap(fn($p) => $p->detail)
+                ->groupBy('produk_id')
+                ->map(fn($items) => $items->sum('qty_permintaan'));
+
+            dd($item, $result);
+        });
+
+        dd($allProduk, $permintaanCabang);
+
+        dd($produkIds, $permintaanCabang);
 
         $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Supplier")->get();
-        return view('purchase_order.index', compact('po', 'search', 'paymentLists', 'allProduk'));
+        return view('purchase_order.index', compact('po', 'search', 'paymentLists', 'allProduk', 'stokGudang'));
     }
 
     public function create()
@@ -67,7 +112,7 @@ class PurchaseOrderController extends Controller
             'supplier_id' => 'required',
             'produk' => 'required|array|min:1',
             'produk.*.id_produk' => 'required',
-            'produk.*.qty' => 'required|numeric|min:1',
+            // 'produk.*.qty' => 'required|numeric|min:1',
             'produk.*.harga' => 'required|numeric|min:0',
         ]);
 
@@ -153,7 +198,7 @@ class PurchaseOrderController extends Controller
 
                 DetailPurchaseOrder::create([
                     'po_id' => $po->po_id,
-                    'id_produk' => $item['id_produk'],
+                    'produk_id' => $item['id_produk'],
                     'qty' => $item['qty'],
                     'harga' => $item['harga'],
                 ]);
@@ -169,6 +214,7 @@ class PurchaseOrderController extends Controller
                 ->with('success', 'Purchase Order berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
+            dd($e->getMessage());
             return back()->withErrors($e->getMessage());
         }
     }
@@ -189,8 +235,11 @@ class PurchaseOrderController extends Controller
                 'Dikirim Supplier' => ['Selesai'],
                 'Menunggu Persetujuan' => ['Draft', 'Menunggu Persetujuan'],
             ],
+            'Purchasing' => [
+                'Menunggu Persetujuan' => ['Disetujui Purchasing', 'Ditolak Purchasing'],
+            ],
             'Manajer' => [
-                'Menunggu Persetujuan' => ['Disetujui Manajer', 'Ditolak Manajer'],
+                'Disetujui Purchasing' => ['Disetujui Manajer', 'Ditolak Manajer'],
             ],
             'Supplier' => [
                 'Disetujui Manajer' => ['Diterima Supplier', 'Ditolak Supplier'],

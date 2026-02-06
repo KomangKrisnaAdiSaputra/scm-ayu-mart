@@ -29,7 +29,7 @@ class PaymentListController extends Controller
         $user = auth()->user();
 
         // Hanya Manajer & Supplier
-        if (!in_array($user->role, ['Manajer', 'Supplier'])) {
+        if (!in_array($user->role, ['Purchasing', 'Supplier'])) {
             abort(403);
         }
 
@@ -56,7 +56,7 @@ class PaymentListController extends Controller
         $user = auth()->user();
 
         // Role yang diizinkan
-        if (!in_array($user->role, ['Manajer', 'Supplier'])) {
+        if (!in_array($user->role, ['Purchasing', 'Supplier'])) {
             abort(403);
         }
 

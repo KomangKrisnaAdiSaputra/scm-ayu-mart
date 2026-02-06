@@ -78,14 +78,15 @@
 
                                             <td>
                                                 <input type="number" name="produk[{{ $i }}][qty]"
-                                                    class="form-control" min="1" value="{{ $d->qty }}"
-                                                    required>
+                                                    class="form-control" min="0" value="{{ $d->qty }}"
+                                                    {{ auth()->user()->role == 'Purchasing' ? '' : 'readonly' }} required>
                                             </td>
 
                                             <td>
                                                 {{-- INPUT TAMPILAN --}}
                                                 <input type="text" class="form-control harga-format text-right"
-                                                    value="{{ number_format($d->harga, 0, ',', '.') }}" autocomplete="off">
+                                                    value="{{ number_format($d->harga, 0, ',', '.') }}" autocomplete="off"
+                                                    readonly>
 
                                                 {{-- INPUT ASLI --}}
                                                 <input type="hidden" name="produk[{{ $i }}][harga]"
@@ -113,7 +114,7 @@
 
                                             <td>
                                                 <input type="number" name="produk[0][qty]" class="form-control"
-                                                    min="1" value="1">
+                                                    min="0" value="0" readonly>
                                             </td>
 
                                             <td>
@@ -132,9 +133,11 @@
                             </table>
                         </div>
 
-                        <button type="button" class="btn btn-success btn-sm" id="add-row">
-                            + Tambah Produk
-                        </button>
+                        @if (auth()->user()->role != 'Purchasing')
+                            <button type="button" class="btn btn-success btn-sm" id="add-row">
+                                + Tambah Produk
+                            </button>
+                        @endif
 
                     </div>
 
@@ -171,7 +174,7 @@
         </td>
 
         <td>
-            <input type="number" name="produk[${index}][qty]" class="form-control" min="1" value="1">
+            <input type="number" name="produk[${index}][qty]" class="form-control" min="0" value="0" readonly>
         </td>
 
         <td>

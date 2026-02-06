@@ -20,6 +20,8 @@ return new class extends Migration
             $table->enum('status_po', [
                 'Draft',
                 'Menunggu Persetujuan',
+                'Disetujui Purchasing',
+                'Ditolak Purchasing',
                 'Disetujui Manajer',
                 'Ditolak Manajer',
                 'Diterima Supplier',

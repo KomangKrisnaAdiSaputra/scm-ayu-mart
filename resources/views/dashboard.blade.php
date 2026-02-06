@@ -43,44 +43,47 @@
 
             <div class="row">
                 @foreach ($section['items'] as $item)
-                    <div class="col-lg-{{ $col }} col-md-12">
-                        <div class="card">
+                    @if (count($item['details']) > 0)
+                        <div class="col-lg-{{ $col }} col-md-12">
+                            <div class="card">
 
-                            {{-- HEADER --}}
-                            <div class="card-header">
-                                <h4>{{ $item['title'] }}</h4>
-                            </div>
-
-                            {{-- BODY --}}
-                            <div class="card-body">
-
-                                {{-- DONUT --}}
-                                <div class="text-center mb-4">
-                                    <canvas id="{{ $item['id'] }}" style="max-height:220px"></canvas>
+                                {{-- HEADER --}}
+                                <div class="card-header">
+                                    <h4>{{ $item['title'] }}</h4>
                                 </div>
 
-                                {{-- DETAIL LIST --}}
-                                <ul class="list-group list-group-flush">
-                                    @foreach ($item['details'] as $d)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                            <span>
-                                                <i class="fas fa-{{ $d['icon'] }} me-2"
-                                                    style="color: {{ $d['color'] }}"></i>
-                                                {{ $d['label'] }}
-                                            </span>
-                                            <span class="badge"
-                                                style="background-color: {{ $d['color'] }}; color: #fff;">
-                                                {{ $d['value'] }}
-                                            </span>
+                                {{-- BODY --}}
+                                <div class="card-body">
 
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                    {{-- DONUT --}}
+                                    <div class="text-center mb-4">
+                                        <canvas id="{{ $item['id'] }}" style="max-height:220px"></canvas>
+                                    </div>
+
+                                    {{-- DETAIL LIST --}}
+                                    <ul class="list-group list-group-flush">
+                                        @foreach ($item['details'] as $d)
+                                            <li
+                                                class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span>
+                                                    <i class="fas fa-{{ $d['icon'] }} me-2"
+                                                        style="color: {{ $d['color'] }}"></i>
+                                                    {{ $d['label'] }}
+                                                </span>
+                                                <span class="badge"
+                                                    style="background-color: {{ $d['color'] }}; color: #fff;">
+                                                    {{ $d['value'] }}
+                                                </span>
+
+                                            </li>
+                                        @endforeach
+                                    </ul>
 
 
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         @endif
@@ -91,16 +94,18 @@
             @php $col = 12 / ($section['per_row'] ?? 2); @endphp
             <div class="row">
                 @foreach ($section['items'] as $chart)
-                    <div class="col-lg-{{ $col }} col-md-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4>{{ $chart['title'] }}</h4>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="{{ $chart['id'] }}"></canvas>
+                    @if (count($chart['data']['datasets']) > 0)
+                        <div class="col-lg-{{ $col }} col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>{{ $chart['title'] }}</h4>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="{{ $chart['id'] }}"></canvas>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         @endif
@@ -145,7 +150,7 @@
                                             <tr>
                                                 <td colspan="{{ count($table['headers']) }}"
                                                     class="text-center py-3 text-success">
-                                                    {{ $table['empty_text'] }}
+                                                    {{ $table['empty_text'] ?? 'Data Empty' }}
                                                 </td>
                                             </tr>
                                         @endforelse

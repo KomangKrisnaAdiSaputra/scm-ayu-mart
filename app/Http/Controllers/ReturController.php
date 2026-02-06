@@ -133,7 +133,7 @@ class ReturController extends Controller
 
     public function storeReturPayment(Request $request)
     {
-        abort_if(auth()->user()->role !== 'Manajer', 403);
+        abort_if(!in_array(auth()->user()->role, ['Manajer', 'Purchasing']), 403);
 
         $request->validate([
             'retur_id' => 'required|exists:retur,retur_id',
@@ -286,7 +286,7 @@ class ReturController extends Controller
     public function selesai($id)
     {
         abort_if(
-            !in_array(auth()->user()->role, ['Gudang', 'Manajer']),
+            !in_array(auth()->user()->role, ['Gudang', 'Manajer', 'Purchasing']),
             403
         );
 

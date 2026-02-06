@@ -57,8 +57,6 @@ class InvoiceController extends Controller
             'bukti_pembayaran'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        dd($request->all());
-
         DB::transaction(function () use ($request, $invoice) {
 
             $path = optional($invoice->payment)?->bukti_pembayaran ?? null;

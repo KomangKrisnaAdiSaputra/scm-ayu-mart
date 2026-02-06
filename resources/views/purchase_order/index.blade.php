@@ -14,7 +14,7 @@
     <div class="row">
         <div class="col-12 col-md-12 col-lg-12">
 
-            @if (in_array(auth()->user()->role, ['Gudang', 'Manajer']))
+            @if (in_array(auth()->user()->role, ['Gudang']))
                 <div class="d-flex justify-content-end mb-3">
                     <a href="{{ route('purchaseorder.create') }}"" class="btn btn-primary">Form Purchase</a>
                 </div>
@@ -108,6 +108,14 @@
 
                                         {{-- AKSI --}}
                                         <td class="text-nowrap">
+
+                                            @if ($item->status_po == 'Menunggu Persetujuan' && in_array(auth()->user()->role, ['Purchasing']))
+                                                <a href="{{ route('purchaseorder.edit', $item->po_id) }}"
+                                                    class="btn btn-success btn-sm">
+                                                    Edit
+                                                </a>
+                                            @endif
+
                                             <button class="btn btn-info btn-sm btn-detail"
                                                 data-po='@json($item)'>
                                                 Detail
@@ -133,7 +141,14 @@
                                                 }
 
                                                 if ($role === 'Manajer') {
-                                                    if ($status === 'Menunggu Persetujuan') {
+                                                    if ($status === 'Disetujui Purchasing') {
+                                                        $bolehUbahStatus = true;
+                                                    }
+                                                }
+
+                                                if ($role === 'Purchasing') {
+                                                    $qtyDetail = collect($item->detail)->where('qty', '<=', 0)->first();
+                                                    if ($status === 'Menunggu Persetujuan' && !$qtyDetail) {
                                                         $bolehUbahStatus = true;
                                                     }
                                                 }
@@ -166,7 +181,7 @@
                                                     data-po-id="{{ $item->po_id }}">
                                                     Buat Invoice
                                                 </button>
-                                            @elseif(in_array(auth()->user()->role, ['Manajer', 'Supplier']) && $item->invoice)
+                                            @elseif(in_array(auth()->user()->role, ['Purchasing', 'Supplier']) && $item->invoice)
                                                 <button type="button" class="btn btn-success btn-sm btn-bayar-invoice"
                                                     data-role='@json(auth()->user()->role)'
                                                     data-invoice='@json($item->invoice)'
@@ -256,8 +271,11 @@
                 'Dikirim Supplier': ['Selesai'],
                 'Menunggu Persetujuan': ['Draft', 'Menunggu Persetujuan'],
             },
+            Purchasing: {
+                'Menunggu Persetujuan': ['Disetujui Purchasing', 'Ditolak Purchasing'],
+            },
             Manajer: {
-                'Menunggu Persetujuan': ['Disetujui Manajer', 'Ditolak Manajer'],
+                'Disetujui Purchasing': ['Disetujui Manajer', 'Ditolak Manajer'],
             },
             Supplier: {
                 'Disetujui Manajer': ['Diterima Supplier', 'Ditolak Supplier'],
@@ -269,33 +287,41 @@
             const po = $(this).data('po');
             const role = "{{ auth()->user()->role }}";
             const allProduk = @json($allProduk);
+            const stokGudang = @json($stokGudang);
+            const editPoRouteTemplate = "{{ route('purchaseorder.edit', ':id') }}";
 
-            $('#po_id').val(po.po_id);
-
-            // info utama
+            // ========================
+            // INFO UTAMA
+            // ========================
             $('#d_po_kode').text(po.kode_po);
             $('#d_po_id').text('PO-' + po.po_id);
             $('#d_supplier').text(po.supplier?.nama_supplier ?? '-');
             $('#d_tanggal').text(po.tanggal_po);
             $('#d_status_po').text(po.status_po);
             $('#d_status_bayar').text(po.status_pembayaran);
+            $('#d_catatan').text(po.catatan ?? '-');
 
-            // detail produk
+            // ========================
+            // DETAIL PRODUK
+            // ========================
             let html = '';
             let total = 0;
 
             po.detail.forEach((item, i) => {
                 const produk = allProduk.find(a => a.id_produk == item.produk_id);
+                const gudang = stokGudang.find(a => a.produk_id == item.produk_id);
                 const subtotal = item.qty * item.harga;
                 total += subtotal;
 
                 html += `
             <tr>
                 <td>${i + 1}</td>
-                <td>${produk.nama_produk}</td>
-                <td>${item.qty}</td>
-                <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
-                <td>Rp ${subtotal.toLocaleString('id-ID')}</td>
+                <td>${produk?.nama_produk ?? '-'}</td>
+                <td class="text-right">${gudang?.stok_total ?? 0}</td>
+                <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
+                <td class="text-right">${item.qty}</td>
+                <td class="text-right">Rp ${item.harga.toLocaleString('id-ID')}</td>
+                <td class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</td>
             </tr>
         `;
             });
@@ -303,9 +329,40 @@
             $('#detailProdukPO').html(html);
             $('#d_total_po').text('Rp ' + total.toLocaleString('id-ID'));
 
+            // ========================
+            // BUTTON EDIT
+            // ========================
+            const editUrl = editPoRouteTemplate.replace(':id', po.po_id);
+
+            if (po.status_po == "Menunggu Persetujuan" && ["Purchasing"].includes(role)) {
+                $('#btnEditPO')
+                    .attr('href', editUrl)
+                    .removeClass('d-none');
+            } else {
+                $('#btnEditPO')
+                    .attr('href', "#")
+                    .addClass('d-none');
+            }
+
+            const allowed = rules[role]?.[po.status_po] ?? [];
+            const qtyDetail = po.detail.find(item => item.qty <= 0);
+            // ========================
+            // BUTTON UBAH STATUS
+            // ========================
+            if (allowed.length > 0 && !qtyDetail) {
+                $('#btnUbahStatus')
+                    .off('click') // penting supaya tidak double bind
+                    .on('click', function() {
+                        openUpdateStatusModal(po, role);
+                    })
+                    .removeClass('d-none');
+            } else {
+                $('#btnUbahStatus').addClass('d-none');
+            }
 
             $('#modalDetailPO').modal('show');
         });
+
 
         // ===== HELPER =====
         function formatRupiah(angka) {
@@ -427,7 +484,7 @@
                     if (invoice.status_invoice === 'Menunggu Pembayaran') {
                         statusEl.classList.add('badge-warning');
 
-                        if (role === 'Manajer') {
+                        if (role === 'Purchasing') {
                             btnBayar.classList.remove('d-none');
                             formBayar.action = window.routes.invoicePayment.replace(':id', invoice
                                 .invoice_id);
@@ -568,77 +625,120 @@
 
 @endsection
 
-<div class="modal fade" id="modalDetailPO" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
+<div class="modal fade" id="modalDetailPO" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-sm border-0">
 
-            {{-- HEADER --}}
-            <div class="modal-header d-flex justify-content-between align-items-center">
-                <h5 class="modal-title">Detail Purchase Order</h5>
-
-                <button type="button" class="close ml-3" data-dismiss="modal">&times;</button>
+            <!-- HEADER -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title mb-0">
+                    <i class="fa fa-file-invoice mr-2"></i> Detail Purchase Order
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
             </div>
 
-            {{-- BODY --}}
+            <!-- BODY -->
             <div class="modal-body">
 
-                {{-- INFO UTAMA --}}
-                <table class="table table-sm table-borderless mb-3">
-                    <tr>
-                        <th width="150">Kode PO</th>
-                        <td id="d_po_kode"></td>
-                    </tr>
-                    <tr>
-                        <th width="150">ID PO</th>
-                        <td id="d_po_id"></td>
-                    </tr>
-                    <tr>
-                        <th>Supplier</th>
-                        <td id="d_supplier"></td>
-                    </tr>
-                    <tr>
-                        <th>Tanggal PO</th>
-                        <td id="d_tanggal"></td>
-                    </tr>
-                    <tr>
-                        <th>Status PO</th>
-                        <td id="d_status_po"></td>
-                    </tr>
-                    <tr>
-                        <th>Status Pembayaran</th>
-                        <td id="d_status_bayar"></td>
-                    </tr>
-                </table>
+                <!-- INFO UTAMA -->
+                <div class="card mb-3 border-0">
+                    <div class="card-body p-2">
+                        <div class="row small">
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm mb-0">
+                                    <tr>
+                                        <th width="140">Kode PO</th>
+                                        <td id="d_po_kode"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ID PO</th>
+                                        <td id="d_po_id"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <td id="d_supplier"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tanggal PO</th>
+                                        <td id="d_tanggal"></td>
+                                    </tr>
+                                </table>
+                            </div>
 
-                <hr>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm mb-0">
+                                    <tr>
+                                        <th width="160">Status PO</th>
+                                        <td id="d_status_po"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status Pembayaran</th>
+                                        <td id="d_status_bayar"></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Keterangan</th>
+                                        <td id="d_catatan"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                {{-- DETAIL PRODUK --}}
-                <h6 class="mb-2">Detail Produk</h6>
+                <!-- DETAIL PRODUK -->
+                <h6 class="mb-2 font-weight-bold">
+                    <i class="fa fa-box mr-1"></i> Detail Produk
+                </h6>
+
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm">
-                        <thead class="bg-light">
+                    <table class="table table-sm table-hover table-bordered">
+                        <thead class="bg-light text-center align-middle">
                             <tr>
-                                <th>#</th>
-                                <th>Produk</th>
-                                <th>Qty</th>
-                                <th>Harga</th>
-                                <th>Subtotal</th>
+                                <th rowspan="2" width="40">#</th>
+                                <th rowspan="2">Produk</th>
+                                <th colspan="2">Gudang</th>
+                                <th rowspan="2">Qty PO</th>
+                                <th rowspan="2">Harga</th>
+                                <th rowspan="2">Subtotal</th>
+                            </tr>
+                            <tr>
+                                <th>Stok</th>
+                                <th>Min</th>
                             </tr>
                         </thead>
+
                         <tbody id="detailProdukPO"></tbody>
+
                         <tfoot>
-                            <tr>
-                                <th colspan="4" class="text-right">Total</th>
-                                <th id="d_total_po"></th>
+                            <tr class="bg-light font-weight-bold">
+                                <td colspan="6" class="text-right">Total</td>
+                                <td id="d_total_po" class="text-right"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
 
             </div>
+
+            <div class="modal-footer">
+
+                <a href="#" id="btnEditPO" class="btn btn-success btn-sm d-none">
+                    Edit
+                </a>
+
+                <button id="btnUbahStatus" class="btn btn-sm btn-warning d-none" data-toggle="modal"
+                    data-target="#modalUpdateStatus">
+                    Ubah Status
+                </button>
+
+            </div>
+
         </div>
     </div>
 </div>
+
 
 <div class="modal fade" id="modalBayarInvoice" tabindex="-1">
     <div class="modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable">
@@ -729,7 +829,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Catatan Manajer</label>
+                        <label>Catatan</label>
                         <textarea id="catatan_manajer" class="form-control" rows="2" name="catatan_manajer"></textarea>
                     </div>
                 </div>

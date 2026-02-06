@@ -542,7 +542,7 @@ class DashboardController extends Controller
         // ===============================
         $statusPOChart = $purchaseOrders
             ->groupBy(fn($po) => match ($po->status_po) {
-                'Menunggu Persetujuan' => 'Menunggu',
+                'Diterima Purchasing' => 'Menunggu',
                 'Disetujui Manajer'    => 'Disetujui',
                 'Dikirim Supplier'    => 'Dikirim',
                 'Selesai'             => 'Selesai',
