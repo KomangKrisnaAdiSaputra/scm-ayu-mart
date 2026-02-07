@@ -308,17 +308,29 @@
             let total = 0;
 
             po.detail.forEach((item, i) => {
-                const produk = allProduk.find(a => a.id_produk == item.produk_id);
-                const gudang = stokGudang.find(a => a.produk_id == item.produk_id);
+                const produk = allProduk.find(p => p.id_produk == item.produk_id);
+                const gudang = stokGudang.find(g => g.produk_id == item.produk_id);
+
                 const subtotal = item.qty * item.harga;
                 total += subtotal;
 
+                const cabangHtml = (produk?.cabangs && produk.cabangs.length) ?
+                    `<ul class="mb-0 pl-3">
+                ${produk.cabangs.map(c =>
+                    `<li>${c.nama}: ${c.qty}</li>`
+                ).join('')}
+              </ul>` :
+                    '-';
+
                 html += `
             <tr>
-                <td>${i + 1}</td>
+                <td class="text-center">${i + 1}</td>
                 <td>${produk?.nama_produk ?? '-'}</td>
                 <td class="text-right">${gudang?.stok_total ?? 0}</td>
                 <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
+                <td class="text-right">${produk?.qty_masuk ?? 0}</td>
+                <td class="text-right">${produk?.qty_keluar ?? 0}</td>
+                <td>${cabangHtml}</td>
                 <td class="text-right">${item.qty}</td>
                 <td class="text-right">Rp ${item.harga.toLocaleString('id-ID')}</td>
                 <td class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</td>
@@ -334,27 +346,26 @@
             // ========================
             const editUrl = editPoRouteTemplate.replace(':id', po.po_id);
 
-            if (po.status_po == "Menunggu Persetujuan" && ["Purchasing"].includes(role)) {
+            if (po.status_po === "Menunggu Persetujuan" && role === "Purchasing") {
                 $('#btnEditPO')
                     .attr('href', editUrl)
                     .removeClass('d-none');
             } else {
                 $('#btnEditPO')
-                    .attr('href', "#")
-                    .addClass('d-none');
+                    .addClass('d-none')
+                    .attr('href', '#');
             }
 
-            const allowed = rules[role]?.[po.status_po] ?? [];
-            const qtyDetail = po.detail.find(item => item.qty <= 0);
             // ========================
             // BUTTON UBAH STATUS
             // ========================
-            if (allowed.length > 0 && !qtyDetail) {
+            const allowed = rules?.[role]?.[po.status_po] ?? [];
+            const qtyInvalid = po.detail.some(item => item.qty <= 0);
+
+            if (allowed.length > 0 && !qtyInvalid) {
                 $('#btnUbahStatus')
-                    .off('click') // penting supaya tidak double bind
-                    .on('click', function() {
-                        openUpdateStatusModal(po, role);
-                    })
+                    .off('click')
+                    .on('click', () => openUpdateStatusModal(po, role))
                     .removeClass('d-none');
             } else {
                 $('#btnUbahStatus').addClass('d-none');
@@ -362,6 +373,7 @@
 
             $('#modalDetailPO').modal('show');
         });
+
 
 
         // ===== HELPER =====
@@ -693,19 +705,23 @@
                 </h6>
 
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover table-bordered">
-                        <thead class="bg-light text-center align-middle">
+                    <table class="table table-sm table-bordered table-hover align-middle">
+                        <thead class="bg-light text-center">
                             <tr>
-                                <th rowspan="2" width="40">#</th>
-                                <th rowspan="2">Produk</th>
-                                <th colspan="2">Gudang</th>
-                                <th rowspan="2">Qty PO</th>
-                                <th rowspan="2">Harga</th>
-                                <th rowspan="2">Subtotal</th>
+                                <th rowspan="2" class="text-center align-middle">#</th>
+                                <th rowspan="2" class="text-center align-middle">Produk</th>
+                                <th colspan="2" class="text-center align-middle">Gudang</th>
+                                <th colspan="2" class="text-center align-middle">Mutasi Stok (30 Hari)</th>
+                                <th rowspan="2" class="text-center align-middle">Cabang</th>
+                                <th rowspan="2" class="text-center align-middle">Qty PO</th>
+                                <th rowspan="2" class="text-center align-middle">Harga</th>
+                                <th rowspan="2" class="text-center align-middle">Subtotal</th>
                             </tr>
                             <tr>
                                 <th>Stok</th>
                                 <th>Min</th>
+                                <th>Masuk</th>
+                                <th>Keluar</th>
                             </tr>
                         </thead>
 
@@ -713,7 +729,7 @@
 
                         <tfoot>
                             <tr class="bg-light font-weight-bold">
-                                <td colspan="6" class="text-right">Total</td>
+                                <td colspan="9" class="text-right">Total</td>
                                 <td id="d_total_po" class="text-right"></td>
                             </tr>
                         </tfoot>

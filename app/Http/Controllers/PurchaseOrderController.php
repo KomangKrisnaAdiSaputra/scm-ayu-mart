@@ -44,39 +44,41 @@ class PurchaseOrderController extends Controller
             ->values();
         $permintaanCabang = PermintaanCabang::with(["detail"])->whereHas("detail", fn($q) => $q->wherein("produk_id", $produkIds))->get();
 
-        $allProduk = TbProduk::all()->map(function ($item) use ($permintaanCabang, $po) {
+        $allProduk = TbProduk::all()->map(function ($item) use ($permintaanCabang, $po, $allCabang) {
             $qtyMasuk = $po
                 ->where('status_po', 'Selesai')
+                ->where('tanggal_po', '<=', now()->subDays(30))
                 ->flatMap(fn($po) => $po->detail)
                 ->groupBy('produk_id')
                 ->map(fn($items) => $items->sum('qty'));
             $qtyKeluar = $permintaanCabang
+                ->where('tanggal_permintaan', '<=', now()->subDays(30))
                 ->where('status_permintaan', 'Diterima')
                 ->flatMap(fn($pc) => $pc->detail)
                 ->groupBy('produk_id')
                 ->map(fn($items) => $items->sum('qty_permintaan'));
 
+            $cabangs = $allCabang->map(function ($cabang) use ($permintaanCabang, $item) {
+
+                $result = $permintaanCabang
+                    ->where('cabang_id', $cabang->id_cabang)
+                    ->flatMap(fn($p) => $p->detail)
+                    ->groupBy('produk_id')
+                    ->map(fn($detailCabang) => $detailCabang->sum('qty_permintaan'));
+
+                return [
+                    'nama' => $cabang->nama_cabang,
+                    'qty' => $result[$item->id_produk] ?? 0
+                ];
+            });
+
             return [
                 ...$item->toArray(),
                 "qty_masuk" => $qtyMasuk[$item->id_produk] ?? 0,
                 "qty_keluar" => $qtyKeluar[$item->id_produk] ?? 0,
+                "cabangs" => $cabangs
             ];
         });
-
-        $allCabang = TbCabang::all()->map(function ($item) use ($permintaanCabang) {
-
-            $result = $permintaanCabang
-                ->where('cabang_id', $item->id_cabang)
-                ->flatMap(fn($p) => $p->detail)
-                ->groupBy('produk_id')
-                ->map(fn($items) => $items->sum('qty_permintaan'));
-
-            dd($item, $result);
-        });
-
-        dd($allProduk, $permintaanCabang);
-
-        dd($produkIds, $permintaanCabang);
 
         $paymentLists = PaymentList::select(["name", "description", "photo", "created_by"])->where("created_role", "Supplier")->get();
         return view('purchase_order.index', compact('po', 'search', 'paymentLists', 'allProduk', 'stokGudang'));
