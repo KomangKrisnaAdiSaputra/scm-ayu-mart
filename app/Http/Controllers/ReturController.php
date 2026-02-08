@@ -26,7 +26,7 @@ class ReturController extends Controller
             })->orWhereHas('purchaseOrder', function ($qp) use ($search) {
                 $qp->where('kode_po', 'like', "%$search%");
             })->orWhere('status_retur', 'like', "%$search%");
-        })->whereHas('purchaseOrder.suplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
+        })->whereHas('purchaseOrder.supplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
             ->orderBy('tanggal_retur', 'desc')
             ->paginate(10)
             ->withQueryString();

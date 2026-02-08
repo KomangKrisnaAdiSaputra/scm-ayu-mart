@@ -132,11 +132,11 @@
                                             Detail
                                         </button>
 
-                                        @if (in_array(auth()->user()->role, ['Cabang']))
-                                            <button class="btn btn-sm btn-warning btn-edit-stok"
-                                                data-stokcabang='@json($stokCabang)'
+                                        @if (in_array(auth()->user()->role, ['Cabang']) && $item->stok_cabangs->count() > 0)
+                                            <button class="btn btn-sm btn-warning btn-edit-stok-minimum"
+                                                data-stokcabang='@json($item->stok_cabangs)'
                                                 data-namaproduk="{{ $item->nama_produk }}">
-                                                Edit
+                                                Edit Stok Minimum
                                             </button>
                                         @endif
 
@@ -154,6 +154,16 @@
                                                     Delete
                                                 </button>
                                             </form>
+                                        @endif
+
+                                        @if (in_array(auth()->user()->role, ['Cabang', 'Gudang']))
+                                            <button class="btn btn-sm btn-warning btn-edit-stok"
+                                                data-stokcabang='@json($item->stok_cabangs->first())'
+                                                data-stokgudang='@json($stok[$item->id_produk])'
+                                                data-idproduk='@json($item->id_produk)'
+                                                data-namaproduk="{{ $item->nama_produk }}">
+                                                Edit Stok
+                                            </button>
                                         @endif
                                     </td>
 
@@ -285,7 +295,7 @@
             }
         })
 
-        $(document).on('click', '.btn-edit-stok', function() {
+        $(document).on('click', '.btn-edit-stok-minimum', function() {
             const stokCabang = JSON.parse($(this).attr('data-stokcabang'));
             const namaProduk = $(this).attr('data-namaproduk');
 
@@ -301,6 +311,89 @@
             );
 
             $('#detailModal').modal('show');
+        });
+
+        $('.btn-edit-stok').on('click', function() {
+            const stokCabang = $(this).data('stokcabang');
+            const stokGudang = $(this).data('stokgudang');
+            const namaProduk = $(this).data('namaproduk');
+            const idProduk = $(this).data('idproduk');
+            const role = "{{ auth()->user()->role }}";
+            const riwayatStok = @json($riwayatStok);
+            console.log(stokCabang, idProduk, riwayatStok, stokGudang);
+
+            $('#namaProduk').text(namaProduk);
+            $('#produkId').val(idProduk);
+
+            let stokTotal = 0;
+            let stokMinimum = 0;
+
+            if (role === 'Cabang' && stokCabang) {
+                stokTotal = stokCabang.total_stok ?? 0;
+                stokMinimum = stokCabang.stok_minimum ?? 0;
+            }
+
+            if (role === 'Gudang' && stokGudang) {
+                stokTotal = stokGudang.stok_total ?? 0;
+                stokMinimum = stokGudang.stok_minimum ?? 0;
+            }
+
+            // ===== tampilkan stok =====
+            $('#stokTerkini').text(stokTotal);
+            $('#stokMinimum').text(stokMinimum);
+
+            if (stokTotal < stokMinimum) {
+                $('#statusStok')
+                    .html('🔴 <b>Stok menipis</b>')
+                    .removeClass('text-success')
+                    .addClass('text-danger');
+            } else {
+                $('#statusStok')
+                    .html('🟢 <b>Stok aman</b>')
+                    .removeClass('text-danger')
+                    .addClass('text-success');
+            }
+
+            // ===== riwayat =====
+
+            let html = '';
+
+            riwayatStok.forEach(r => {
+
+                const tanggal = new Date(r.created_at).toLocaleString('id-ID', {
+                    dateStyle: 'short',
+                    timeStyle: 'short'
+                });
+
+                const badge = r.type === 'gudang' ?
+                    'primary' :
+                    'info';
+
+                html += `
+        <tr>
+            <td class="text-nowrap">${tanggal}</td>
+            <td>
+                <div class="font-weight-bold">${r.nama}</div>
+                <small class="text-muted">oleh ${r.nama_user}</small>
+            </td>
+            <td class="text-center">
+                <span class="text-muted">${r.qty_lama}</span>
+                <i class="fa fa-arrow-right mx-1 text-secondary"></i>
+                <b>${r.qty_baru}</b>
+            </td>
+            <td>
+                ${r.keterangan ?? '<span class="text-muted">-</span>'}
+            </td>
+        </tr>
+    `;
+            });
+
+            $('#riwayatStokBody').html(
+                html || `<tr><td colspan="5" class="text-center text-muted">Belum ada riwayat</td></tr>`
+            );
+
+
+            $('#modalEditStok').modal('show');
         });
     </script>
 
@@ -441,5 +534,97 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditStok" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    Edit Stok – <span id="namaProduk"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <form method="POST" action="{{ route('produk.updatestok') }}">
+                @csrf
+
+                <div class="modal-body">
+                    <div class="row">
+
+                        <div class="col-md-3">
+
+                            <!-- INFO STOK TERKINI -->
+                            <div class="card mb-3">
+                                <div class="card-body p-2">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <small class="text-muted">Stok Terkini</small>
+                                            <h5 class="mb-0 font-weight-bold" id="stokTerkini">-</h5>
+                                        </div>
+                                        <div class="text-right">
+                                            <small class="text-muted">Stok Minimum</small>
+                                            <div id="stokMinimum">-</div>
+                                        </div>
+                                    </div>
+                                    <div id="statusStok" class="mt-1 small"></div>
+                                </div>
+                            </div>
+
+                            <!-- FORM -->
+                            <input type="hidden" name="produk_id" id="produkId">
+
+                            <div class="form-group">
+                                <label>Stok Baru</label>
+                                <input type="number" class="form-control" name="stok_baru" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Keterangan</label>
+                                <textarea class="form-control" name="keterangan" rows="3"></textarea>
+                            </div>
+                        </div>
+
+
+                        <!-- RIWAYAT -->
+                        <div class="col-md-9 border-left">
+                            <h6 class="font-weight-bold mb-2">Riwayat Stok</h6>
+
+                            <div class="table-responsive" style="max-height:300px">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 20%; text-align: center;">Tanggal</th>
+                                            <th style="width: 25%;">Nama</th>
+                                            <th style="width: 25%; text-align: center;">Perubahan</th>
+                                            <th style="width: 30%;">Keterangan</th>
+                                        </tr>
+                                    </thead>
+
+
+                                    <tbody id="riwayatStokBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                Pilih produk
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-warning">Simpan</button>
+                </div>
+
+            </form>
+
+        </div>
     </div>
 </div>

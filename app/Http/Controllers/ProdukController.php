@@ -7,15 +7,18 @@ use App\Models\Integrasi\TbCabang;
 use App\Models\Integrasi\TbJenis;
 use App\Models\Integrasi\TbProduk;
 use App\Models\Integrasi\TbStokCabang;
+use App\Models\RiwayatStok;
 use App\Models\StokGudang;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProdukController extends Controller
 {
     public function index(Request $request)
     {
+        $userLogin = Auth::user();
         $cabang = TbCabang::where('users_id', auth()->user()->users_id)->first();
         $search = $request->query('search');
 
@@ -30,12 +33,13 @@ class ProdukController extends Controller
             // })
             ->get();
 
+        $riwayatStok = RiwayatStok::whereIn("produk_id", $produk->pluck("id_produk")->toArray())->where("type", $userLogin->role)->orderByDesc("created_at")->get();
         $stok = StokGudang::select(
             'produk_id',
             'stok_total',
             'stok_minimum'
         )->get()->keyBy('produk_id');
-        return view('produk.index', compact('produk', 'search', 'stok'));
+        return view('produk.index', compact('produk', 'search', 'stok', 'riwayatStok'));
     }
 
     public function form($id = null)
@@ -160,5 +164,92 @@ class ProdukController extends Controller
             ]);
 
         return back()->with('success', 'Stok minimum berhasil diperbarui');
+    }
+
+    public function updateStok(Request $request)
+    {
+        $request->validate([
+            'produk_id' => 'required',
+            'stok_baru' => 'required|integer|min:0',
+            'keterangan' => 'nullable|string',
+        ]);
+        $user = Auth::user();
+
+        DB::transaction(function () use ($request, $user) {
+
+            // =====================
+            // ROLE GUDANG
+            // =====================
+            if ($user->role === 'Gudang') {
+
+                $stok = StokGudang::where('produk_id', $request->produk_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                $qtyLama = $stok->stok_total ?? 0;
+
+                StokGudang::updateOrInsert(
+                    ['produk_id' => $request->produk_id],
+                    [
+                        'stok_minimum' => ($stok?->stok_minimum ?? 0) > 0 ? $stok->stok_minimum : $request->stok_baru,
+                        'stok_total' => $request->stok_baru,
+                        'updated_at' => now(),
+                    ]
+                );
+
+                DB::table('riwayat_stok')->insert([
+                    'produk_id' => $request->produk_id,
+                    'type' => 'Gudang',
+                    'nama' => 'Gudang Utama',
+                    'nama_user' => $user->nama,
+                    'qty_lama' => $qtyLama,
+                    'qty_baru' => $request->stok_baru,
+                    'keterangan' => $request->keterangan,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // =====================
+            // ROLE CABANG
+            // =====================
+            if ($user->role === 'Cabang') {
+                $cabang = TbCabang::where("users_id", $user->users_id)->first();
+                $stok = TbStokCabang::where('id_produk', $request->produk_id)
+                    ->where('id_cabang', $cabang->id_cabang)
+                    ->lockForUpdate()
+                    ->first();
+
+                $qtyLama = $stok?->total_stok ?? 0;
+
+                TbStokCabang::updateOrInsert(
+                    [
+                        'id_produk' => $request->produk_id,
+                        'id_cabang' => $cabang->id_cabang
+                    ],
+                    [
+                        'id_produk' => $request->produk_id,
+                        'id_cabang' => $cabang->id_cabang,
+                        'stok_minimum' => ($stok?->stok_minimum ?? 0) > 0 ? $stok->stok_minimum : $request->stok_baru,
+                        'total_stok' => $request->stok_baru,
+                        'updated_at' => now(),
+                    ]
+                );
+
+                RiwayatStok::create([
+                    'produk_id' => $request->produk_id,
+                    'type' => 'Cabang',
+                    'nama' => $cabang->nama_cabang,
+                    'nama_user' => $user->nama,
+                    'qty_lama' => $qtyLama,
+                    'qty_baru' => $request->stok_baru,
+                    'keterangan' => $request->keterangan,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Stok berhasil diperbarui');
     }
 }

@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/form/{id?}', 'form')->name('.form');
         Route::post('/save/{id?}', 'save')->name('.save');
         Route::post('/stok/cabang/{id}', 'saveStokCabang')->name('.stokcabang');
+        Route::post('/stok/update', 'updateStok')->name('.updatestok');
         Route::delete('/produk/{id}', 'delete')->name('.delete');
         Route::get('/', 'index');
     });
