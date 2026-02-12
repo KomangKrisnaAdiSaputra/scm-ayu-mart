@@ -18,6 +18,7 @@ class PurchaseOrder extends Model
         'status_pembayaran',
         'tanggal_pembayaran',
         'catatan',
+        'catatan_privasi',
     ];
 
     public function invoice()

@@ -47,12 +47,12 @@ class PurchaseOrderController extends Controller
         $allProduk = TbProduk::all()->map(function ($item) use ($permintaanCabang, $po, $allCabang) {
             $qtyMasuk = $po
                 ->where('status_po', 'Selesai')
-                ->where('tanggal_po', '<=', now()->subDays(30))
+                ->where('tanggal_po', '>=', now()->subDays(30))
                 ->flatMap(fn($po) => $po->detail)
                 ->groupBy('produk_id')
                 ->map(fn($items) => $items->sum('qty'));
             $qtyKeluar = $permintaanCabang
-                ->where('tanggal_permintaan', '<=', now()->subDays(30))
+                ->where('tanggal_permintaan', '>=', now()->subDays(30))
                 ->where('status_permintaan', 'Diterima')
                 ->flatMap(fn($pc) => $pc->detail)
                 ->groupBy('produk_id')
@@ -96,7 +96,7 @@ class PurchaseOrderController extends Controller
 
     public function edit(PurchaseOrder $po)
     {
-        if (!in_array($po->status_po, ['Draft', 'Menunggu Persetujuan'])) {
+        if (!in_array($po->status_po, ['Draft', 'Menunggu Persetujuan', 'Disetujui Purchasing'])) {
             return redirect()->back()->with('error', 'PO tidak bisa diedit');
         }
 
@@ -119,7 +119,6 @@ class PurchaseOrderController extends Controller
         ]);
 
         DB::beginTransaction();
-
         try {
             $produkMerged = $this->mergeProduk($request->produk);
 
@@ -152,7 +151,8 @@ class PurchaseOrderController extends Controller
                 'total_po' => $total,
                 'status_po' => auth()->user()->role == 'Manajer' ? 'Disetujui Manajer' : 'Draft',
                 'status_pembayaran' => 'Belum Bayar',
-                'catatan' => $request->catatan
+                'catatan' => $request->catatan,
+                'catatan_privasi' => $request->catatan_privasi
             ]);
 
             foreach ($produkMerged as $item) {
@@ -169,7 +169,6 @@ class PurchaseOrderController extends Controller
                 ->with('success', 'Purchase Order berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
-            dd($e->getMessage());
             return back()->withErrors($e->getMessage());
         }
     }
@@ -206,7 +205,12 @@ class PurchaseOrderController extends Controller
                 ]);
             }
 
+            $newData = [];
+            if ($request->catatan_privasi) $newData['catatan_privasi'] = $request->catatan_privasi;
+            if ($request->catatan) $newData['catatan'] = $request->catatan;
+
             $po->update([
+                ...$newData,
                 'supplier_id' => $request->supplier_id,
                 'total_po' => $total,
             ]);

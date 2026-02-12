@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('riwayat_stok', function (Blueprint $table) {
             $table->id();
             $table->integer("produk_id");
+            $table->integer("general_id");
             $table->string("type");
             $table->string("nama");
             $table->string("nama_user");

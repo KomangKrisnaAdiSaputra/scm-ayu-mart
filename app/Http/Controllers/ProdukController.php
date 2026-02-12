@@ -33,7 +33,11 @@ class ProdukController extends Controller
             // })
             ->get();
 
-        $riwayatStok = RiwayatStok::whereIn("produk_id", $produk->pluck("id_produk")->toArray())->where("type", $userLogin->role)->orderByDesc("created_at")->get();
+        $riwayatStok = RiwayatStok::where(function ($q) use ($userLogin, $produk, $cabang) {
+            $q->whereIn("produk_id", $produk->pluck("id_produk")->toArray())->where("type", $userLogin->role);
+            if ($userLogin->role === "Cabang") $q->where("general_id", $cabang->id_cabang);
+        })->orderByDesc("created_at")->get();
+
         $stok = StokGudang::select(
             'produk_id',
             'stok_total',
@@ -141,8 +145,8 @@ class ProdukController extends Controller
 
     public function delete($id)
     {
-        $produk = TbProduk::where('id_produk', $id);
-        if ($produk->foto_produk) {
+        $produk = TbProduk::where('id_produk', $id)->first();
+        if ($produk?->foto_produk) {
             $imagePublicId = pathinfo(parse_url($produk->foto_produk, PHP_URL_PATH), PATHINFO_FILENAME);
             Cloudinary::destroy($imagePublicId);
         }
@@ -197,16 +201,15 @@ class ProdukController extends Controller
                     ]
                 );
 
-                DB::table('riwayat_stok')->insert([
+                RiwayatStok::create([
                     'produk_id' => $request->produk_id,
+                    'general_id' => $user->users_id,
                     'type' => 'Gudang',
                     'nama' => 'Gudang Utama',
                     'nama_user' => $user->nama,
                     'qty_lama' => $qtyLama,
                     'qty_baru' => $request->stok_baru,
                     'keterangan' => $request->keterangan,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
             }
 
@@ -238,14 +241,13 @@ class ProdukController extends Controller
 
                 RiwayatStok::create([
                     'produk_id' => $request->produk_id,
+                    'general_id' => $cabang->id_cabang,
                     'type' => 'Cabang',
                     'nama' => $cabang->nama_cabang,
                     'nama_user' => $user->nama,
                     'qty_lama' => $qtyLama,
                     'qty_baru' => $request->stok_baru,
                     'keterangan' => $request->keterangan,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
             }
         });

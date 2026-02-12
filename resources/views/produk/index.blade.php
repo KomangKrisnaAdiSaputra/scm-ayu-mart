@@ -319,8 +319,8 @@
             const namaProduk = $(this).data('namaproduk');
             const idProduk = $(this).data('idproduk');
             const role = "{{ auth()->user()->role }}";
-            const riwayatStok = @json($riwayatStok);
-            console.log(stokCabang, idProduk, riwayatStok, stokGudang);
+            const riwayatStok = @json($riwayatStok).filter((rs) => rs.produk_id === idProduk);
+            // console.log(stokCabang, idProduk, riwayatStok, stokGudang);
 
             $('#namaProduk').text(namaProduk);
             $('#produkId').val(idProduk);
@@ -583,7 +583,7 @@
 
                             <div class="form-group">
                                 <label>Keterangan</label>
-                                <textarea class="form-control" name="keterangan" rows="3"></textarea>
+                                <textarea class="form-control" name="keterangan" rows="3" required></textarea>
                             </div>
                         </div>
 

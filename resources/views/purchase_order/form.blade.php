@@ -6,6 +6,8 @@
         ['label' => 'Purchase Order', 'url' => route('purchaseorder'), 'active' => 'active'],
         ['label' => 'Form Permintaan', 'url' => '', 'active' => ''],
     ];
+
+    $readOnly = in_array(auth()->user()->role, ['Manajer']);
 @endphp
 @section('app')
     <h2 class="section-title">Form Purchase</h2>
@@ -30,7 +32,7 @@
                         {{-- SUPPLIER --}}
                         <div class="form-group">
                             <label>Supplier</label>
-                            <select name="supplier_id" class="form-control" required>
+                            <select name="supplier_id" class="form-control" required @disabled($readOnly)>
                                 <option value="">-- Pilih Supplier --</option>
                                 @foreach ($supplier as $s)
                                     <option value="{{ $s->supplier_id }}"
@@ -39,12 +41,27 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @if ($readOnly)
+                                <input type="hidden" name="supplier_id"
+                                    value="{{ old('supplier_id', $po->supplier_id ?? '') }}">
+                            @endif
                         </div>
 
+                        @if (in_array(auth()->user()->role, ['Manajer']))
+                            <div class="form-group">
+                                <label>Catatan</label>
+                                <textarea name="catatan" class="form-control @error('catatan') is-invalid @enderror" rows="3">{{ old('catatan', $po->catatan ?? '') }}</textarea>
+                                @error('catatan')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        @endif
+
                         <div class="form-group">
-                            <label>Catatan</label>
-                            <textarea name="catatan" class="form-control @error('catatan') is-invalid @enderror" rows="3">{{ old('catatan', $po->catatan ?? '') }}</textarea>
-                            @error('catatan')
+                            <label>Catatan Privasi (Optional Untuk Internal)</label>
+                            <textarea name="catatan_privasi" class="form-control @error('catatan_privasi') is-invalid @enderror" rows="3"
+                                @readonly($readOnly)>{{ old('catatan_privasi', $po->catatan_privasi ?? '') }}</textarea>
+                            @error('catatan_privasi')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -65,15 +82,20 @@
                                         <tr>
                                             <td>
                                                 <select name="produk[{{ $i }}][id_produk]"
-                                                    class="form-control produk-select" required>
+                                                    class="form-control produk-select" required
+                                                    @disabled($readOnly)>
                                                     @foreach ($produk as $p)
                                                         <option value="{{ $p->id_produk }}"
                                                             data-harga="{{ $p->harga_beli }}"
-                                                            {{ $d->id_produk == $p->id_produk ? 'selected' : '' }}>
+                                                            {{ $d->produk_id == $p->id_produk ? 'selected' : '' }}>
                                                             {{ $p->nama_produk }}
                                                         </option>
                                                     @endforeach
                                                 </select>
+                                                @if ($readOnly)
+                                                    <input type="hidden" name="produk[{{ $i }}][id_produk]"
+                                                        value="{{ $d->produk_id }}">
+                                                @endif
                                             </td>
 
                                             <td>
@@ -93,9 +115,12 @@
                                                     class="harga-asli" value="{{ $d->harga }}">
                                             </td>
 
-                                            <td class="text-center">
-                                                <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
-                                            </td>
+                                            @if (!in_array(auth()->user()->role, ['Manajer']))
+                                                <td class="text-center">
+                                                    <button type="button"
+                                                        class="btn btn-danger btn-sm remove-row">X</button>
+                                                </td>
+                                            @endif
                                         </tr>
                                     @empty
                                         <tr>
@@ -133,7 +158,7 @@
                             </table>
                         </div>
 
-                        @if (auth()->user()->role != 'Purchasing')
+                        @if (in_array(auth()->user()->role, ['Gudang']))
                             <button type="button" class="btn btn-success btn-sm" id="add-row">
                                 + Tambah Produk
                             </button>
@@ -178,7 +203,7 @@
         </td>
 
         <td>
-            <input type="text" class="form-control harga-format text-right" autocomplete="off">
+            <input type="text" class="form-control harga-format text-right" autocomplete="off" readonly>
             <input type="hidden" name="produk[${index}][harga]" class="harga-asli">
         </td>
 

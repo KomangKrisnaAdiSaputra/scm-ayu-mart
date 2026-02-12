@@ -116,6 +116,13 @@
                                                 </a>
                                             @endif
 
+                                            @if ($item->status_po == 'Disetujui Purchasing' && in_array(auth()->user()->role, ['Manajer']))
+                                                <a href="{{ route('purchaseorder.edit', $item->po_id) }}"
+                                                    class="btn btn-success btn-sm">
+                                                    Edit
+                                                </a>
+                                            @endif
+
                                             <button class="btn btn-info btn-sm btn-detail"
                                                 data-po='@json($item)'>
                                                 Detail
@@ -300,6 +307,11 @@
             $('#d_status_po').text(po.status_po);
             $('#d_status_bayar').text(po.status_pembayaran);
             $('#d_catatan').text(po.catatan ?? '-');
+            console.log(po);
+
+            if (['Purchasing', 'Manajer', 'Gudang'].includes(role)) {
+                $('#d_catatan_privasi').text(po.catatan_privasi ?? '-');
+            }
 
             // ========================
             // DETAIL PRODUK
@@ -323,19 +335,24 @@
                     '-';
 
                 html += `
-            <tr>
-                <td class="text-center">${i + 1}</td>
-                <td>${produk?.nama_produk ?? '-'}</td>
-                <td class="text-right">${gudang?.stok_total ?? 0}</td>
-                <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
-                <td class="text-right">${produk?.qty_masuk ?? 0}</td>
-                <td class="text-right">${produk?.qty_keluar ?? 0}</td>
-                <td>${cabangHtml}</td>
-                <td class="text-right">${item.qty}</td>
-                <td class="text-right">Rp ${item.harga.toLocaleString('id-ID')}</td>
-                <td class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</td>
-            </tr>
-        `;
+                        <tr>
+                            <td class="text-center">${i + 1}</td>
+                            <td>${produk?.nama_produk ?? '-'}</td>
+
+                            ${['Purchasing', 'Manajer'].includes(role) ? `
+                                                                                <td class="text-right">${gudang?.stok_total ?? 0}</td>
+                                                                                <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
+                                                                                <td class="text-right">${produk?.qty_masuk ?? 0}</td>
+                                                                                <td class="text-right">${produk?.qty_keluar ?? 0}</td>
+                                                                                <td>${cabangHtml}</td>
+                                                                            ` : ''}
+
+                            <td class="text-right">${item.qty}</td>
+                            <td class="text-right">Rp ${item.harga.toLocaleString('id-ID')}</td>
+                            <td class="text-right">Rp ${subtotal.toLocaleString('id-ID')}</td>
+                        </tr>
+                        `;
+
             });
 
             $('#detailProdukPO').html(html);
@@ -690,9 +707,15 @@
                                         <td id="d_status_bayar"></td>
                                     </tr>
                                     <tr>
-                                        <th>Keterangan</th>
+                                        <th>Catatan</th>
                                         <td id="d_catatan"></td>
                                     </tr>
+                                    @if (in_array(auth()->user()->role, ['Gudang', 'Purchasing', 'Manajer']))
+                                        <tr>
+                                            <th>Catatan Privasi</th>
+                                            <td id="d_catatan_privasi"></td>
+                                        </tr>
+                                    @endif
                                 </table>
                             </div>
                         </div>
@@ -710,26 +733,33 @@
                             <tr>
                                 <th rowspan="2" class="text-center align-middle">#</th>
                                 <th rowspan="2" class="text-center align-middle">Produk</th>
-                                <th colspan="2" class="text-center align-middle">Gudang</th>
-                                <th colspan="2" class="text-center align-middle">Mutasi Stok (30 Hari)</th>
-                                <th rowspan="2" class="text-center align-middle">Cabang</th>
+
+                                @if (in_array(auth()->user()->role, ['Purchasing', 'Manajer']))
+                                    <th colspan="2" class="text-center align-middle">Gudang</th>
+                                    <th colspan="2" class="text-center align-middle">Mutasi Stok (30 Hari)</th>
+                                    <th rowspan="2" class="text-center align-middle">Cabang</th>
+                                @endif
+
                                 <th rowspan="2" class="text-center align-middle">Qty PO</th>
                                 <th rowspan="2" class="text-center align-middle">Harga</th>
                                 <th rowspan="2" class="text-center align-middle">Subtotal</th>
                             </tr>
-                            <tr>
-                                <th>Stok</th>
-                                <th>Min</th>
-                                <th>Masuk</th>
-                                <th>Keluar</th>
-                            </tr>
+                            @if (in_array(auth()->user()->role, ['Purchasing', 'Manajer']))
+                                <tr>
+                                    <th>Stok</th>
+                                    <th>Min</th>
+                                    <th>Masuk</th>
+                                    <th>Keluar</th>
+                                </tr>
+                            @endif
                         </thead>
 
                         <tbody id="detailProdukPO"></tbody>
 
                         <tfoot>
                             <tr class="bg-light font-weight-bold">
-                                <td colspan="9" class="text-right">Total</td>
+                                <td colspan="{{ in_array(auth()->user()->role, ['Purchasing', 'Manajer']) ? 9 : 4 }}"
+                                    class="text-right">Total</td>
                                 <td id="d_total_po" class="text-right"></td>
                             </tr>
                         </tfoot>
