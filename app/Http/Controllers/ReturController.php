@@ -40,7 +40,7 @@ class ReturController extends Controller
     function create()
     {
         $poList = PurchaseOrder::where('status_po', 'Dikirim Supplier')
-            ->whereHas('supplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
+            ->whereHas('supplier', fn($q) => auth()->user()->role === 'Supplier' ? $q->where('users_id', auth()->user()->users_id) : $q)
             ->orderBy('tanggal_po', 'desc')
             ->get();
         $allProduk = TbProduk::all();

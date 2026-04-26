@@ -22,7 +22,7 @@ class UserManagementController extends Controller
                 ->orWhere('username', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('role', 'like', "%{$search}%");
-        })->get();
+        })->whereNot("users_id", auth()->user()->users_id)->get();
 
         $cabangs = TbCabang::whereIn("users_id", $user->pluck("users_id")->toArray())->get();
         return view('user_management.index', compact('user', 'search', 'cabangs'));
@@ -83,7 +83,7 @@ class UserManagementController extends Controller
                     'email'     => $request->email,
                     'nama'      => $request->nama,
                     'role'      => $request->role,
-                    'is_active' => 1,
+                    'is_active' => $request->is_active,
                     ...(!$id ? ['password' => Hash::make($request->password)] : []),
                 ]
             );

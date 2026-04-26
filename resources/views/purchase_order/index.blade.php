@@ -340,12 +340,12 @@
                             <td>${produk?.nama_produk ?? '-'}</td>
 
                             ${['Purchasing', 'Manajer'].includes(role) ? `
-                                                                                <td class="text-right">${gudang?.stok_total ?? 0}</td>
-                                                                                <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
-                                                                                <td class="text-right">${produk?.qty_masuk ?? 0}</td>
-                                                                                <td class="text-right">${produk?.qty_keluar ?? 0}</td>
-                                                                                <td>${cabangHtml}</td>
-                                                                            ` : ''}
+                                                                                        <td class="text-right">${gudang?.stok_total ?? 0}</td>
+                                                                                        <td class="text-right">${gudang?.stok_minimum ?? 0}</td>
+                                                                                        <td class="text-right">${produk?.qty_masuk ?? 0}</td>
+                                                                                        <td class="text-right">${produk?.qty_keluar ?? 0}</td>
+                                                                                        <td>${cabangHtml}</td>
+                                                                                    ` : ''}
 
                             <td class="text-right">${item.qty}</td>
                             <td class="text-right">Rp ${item.harga.toLocaleString('id-ID')}</td>
@@ -510,7 +510,10 @@
                     statusEl.innerText = invoice.status_invoice;
 
                     /* MENUNGGU PEMBAYARAN */
-                    if (invoice.status_invoice === 'Menunggu Pembayaran') {
+                    console.log(invoice.status_invoice);
+
+                    if (invoice.status_invoice === 'Menunggu Pembayaran' || invoice
+                        .status_invoice === 'Ditolak') {
                         statusEl.classList.add('badge-warning');
 
                         if (role === 'Purchasing') {

@@ -93,15 +93,26 @@ class LaporanController extends Controller
         /* =========================
          | PENGIRIMAN
          ========================= */
-        $laporanPengiriman = StatusKurir::select('status_kurir', DB::raw('COUNT(*) as total'))->whereIn('status_kurir', ['Terkirim', 'Gagal'])
-            ->whereHas(
-                'pengiriman',
-                fn($q) => $q->when($from && $to, fn($q) => $q->whereBetween('tanggal_kirim', [$from, $to]))->when(
-                    $statusPengiriman,
-                    fn($q) =>
-                    $q->where('status_pengiriman', $statusPengiriman)
-                )
-            )->groupBy('status_kurir')->get();
+        $laporanPengiriman = StatusKurir::select(
+            'status_kurir',
+            DB::raw('COUNT(*) as total')
+        )
+            ->whereIn('status_kurir', ['Terkirim', 'Gagal'])
+            ->whereHas('pengiriman', function ($q) use ($from, $to, $statusPengiriman) {
+
+                if ($from && $to) {
+                    $q->whereBetween('tanggal_kirim', [
+                        \Carbon\Carbon::parse($from)->startOfDay(),
+                        \Carbon\Carbon::parse($to)->endOfDay()
+                    ]);
+                }
+
+                if (!is_null($statusPengiriman)) {
+                    $q->where('status_pengiriman', $statusPengiriman);
+                }
+            })
+            ->groupBy('status_kurir')
+            ->get();
 
         /* =========================
          | PRODUK PER JENIS

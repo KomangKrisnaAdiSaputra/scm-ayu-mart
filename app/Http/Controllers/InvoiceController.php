@@ -110,10 +110,16 @@ class InvoiceController extends Controller
         $request->validate([
             'catatan_supplier' => 'required'
         ]);
+        $invoice = Invoice::findOrFail($invoiceId);
 
-        Invoice::where('invoice_id', $invoiceId)->update([
+        $invoice->update([
             'status_invoice' => 'Ditolak',
             'catatan_supplier' => $request->catatan_supplier
+        ]);
+
+        $po = PurchaseOrder::find($invoice->po_id);
+        $po->update([
+            'status_pembayaran' => 'Belum Bayar'
         ]);
 
         return back()->with('success', 'Invoice ditolak');

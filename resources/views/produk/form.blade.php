@@ -196,15 +196,23 @@
                             @if (!isset($produk->id_produk))
                                 <div class="col-md-6">
                                     <label>Stok Awal</label>
-                                    <input type="number" name="stok_total" class="form-control" min="0"
+                                    <input type="number" name="stok_total"
+                                        class="form-control @error('stok_total') is-invalid @enderror"" min="0"
                                         value="{{ old('stok_total', '') }}">
+                                    @error('stok_total')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             @endif
 
                             <div class="col-md-6">
                                 <label>Stok Minimum</label>
-                                <input type="number" name="stok_minimum" class="form-control"
+                                <input type="number" name="stok_minimum"
+                                    class="form-control @error('stok_minimum') is-invalid @enderror"" min="0"
                                     value="{{ old('stok_minimum', $stokGudang->stok_minimum ?? '') }}">
+                                @error('stok_minimum')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
 
                         </div>
