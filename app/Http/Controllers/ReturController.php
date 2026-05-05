@@ -26,7 +26,7 @@ class ReturController extends Controller
             })->orWhereHas('purchaseOrder', function ($qp) use ($search) {
                 $qp->where('kode_po', 'like', "%$search%");
             })->orWhere('status_retur', 'like', "%$search%");
-        })->whereHas('purchaseOrder.supplier', fn($q) => $q->where('users_id', auth()->user()->users_id))
+        })->whereHas('purchaseOrder.supplier', fn($q) => auth()->user()->role === 'Supplier' ? $q->where('users_id', auth()->user()->users_id) : $q)
             ->orderBy('tanggal_retur', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -76,7 +76,7 @@ class ReturController extends Controller
                     }
 
                     Retur::create([
-                        'po_id'         => $request->po_id,
+                        'po_id'         => $poId,
                         'produk_id'     => $item['produk_id'],
                         'qty_retur'     => $item['qty_retur'],
                         'alasan'        => $item['alasan'],
@@ -88,8 +88,8 @@ class ReturController extends Controller
                 }
 
                 if ($hasRetur) {
-                    PurchaseOrder::where('po_id', $request->po_id)
-                        ->update(['status_po' => 'Retur']);
+                    PurchaseOrder::where('po_id', $poId)->update(['status_po' => 'Retur']);
+                    $hasRetur = false;
                 }
             }
 
@@ -99,7 +99,7 @@ class ReturController extends Controller
                 ->with('success', 'Retur berhasil disimpan');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage() . " Line: " . $e->getLine());
         }
     }
 
@@ -109,11 +109,14 @@ class ReturController extends Controller
             'jenis_retur' => 'required|in:dana,barang',
         ]);
 
-        $retur = Retur::findOrFail($id);
+        $retur = Retur::with(['purchaseOrder'])->findOrFail($id);
 
         abort_if(auth()->user()->role !== 'Supplier', 403);
         abort_if($retur->status_retur !== 'Menunggu Konfirmasi', 400);
+        $po = $retur->purchaseOrder;
+        $produkPo = $po->detail()->where('produk_id', $retur->produk_id)->first();
 
+        $qtyMasuk = $produkPo->qty - $retur->qty_retur;
         if ($request->jenis_retur === 'dana') {
             $retur->update([
                 'status_retur' => "Diterima",
@@ -127,6 +130,8 @@ class ReturController extends Controller
                 'catatan' => $request->catatan
             ]);
         }
+        $stok = StokGudang::where('produk_id', $retur->produk_id)->lockForUpdate()->first();
+        $stok->increment('stok_total', $qtyMasuk);
 
         return back()->with('success', 'Retur berhasil diterima');
     }
@@ -321,7 +326,8 @@ class ReturController extends Controller
             /**
              * 1️⃣ Hitung qty masuk gudang
              */
-            $qtyMasukGudang = $qtyPo + $qtyRetur;
+            // $qtyMasukGudang = $qtyPo + $qtyRetur;
+            $qtyMasukGudang = $qtyRetur;
 
             /**
              * 2️⃣ Tambah stok gudang
@@ -339,18 +345,18 @@ class ReturController extends Controller
             /**
              * 3️⃣ Update qty PO detail
              */
-            $poDetail->update([
-                'qty' => $qtyMasukGudang
-            ]);
+            // $poDetail->update([
+            //     'qty' => $qtyMasukGudang
+            // ]);
 
             /**
              * 4️⃣ Hitung ulang TOTAL PO
              */
-            $totalPoBaru = $po->detail->sum(function ($item) {
-                return $item->qty * $item->harga;
-            });
+            // $totalPoBaru = $po->detail->sum(function ($item) {
+            //     return $item->qty * $item->harga;
+            // });
 
-            $poUpdate['total_po'] = $totalPoBaru;
+            // $poUpdate['total_po'] = $totalPoBaru;
         }
 
         $po->update([
@@ -460,15 +466,28 @@ class ReturController extends Controller
             $retur = Retur::with('purchaseOrder')
                 ->lockForUpdate()
                 ->findOrFail($id);
+            $anotherReturs = Retur::where('po_id', $retur->po_id)->whereNot('retur_id', $retur->retur_id)->whereNotIn('status_retur', ['Ditolak', 'Menunggu Konfirmasi', 'Selesai'])->get();
 
             if ($retur->status_retur !== 'Menunggu Konfirmasi') {
                 throw new \Exception('Retur sudah diproses');
+            }
+
+            if ($anotherReturs->count() > 0) {
+                throw new \Exception('Salah Satu Produk Retur sudah diproses');
             }
 
             $retur->update([
                 'status_retur' => 'Ditolak',
                 'catatan' => $request->catatan
             ]);
+
+            Retur::where('po_id', $retur->po_id)
+                ->where('retur_id', '!=', $retur->retur_id)
+                ->whereIn('status_retur', ['Menunggu Konfirmasi'])
+                ->update([
+                    'status_retur' => 'Ditolak',
+                    'catatan' => 'Retur lain dalam 1 PO ditolak, maka retur ini otomatis ditolak'
+                ]);
 
             // PO kembali ke kondisi sebelumnya
             $retur->purchaseOrder->update([

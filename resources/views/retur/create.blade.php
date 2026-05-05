@@ -71,6 +71,10 @@
                                             </td>
                                             <td>{{ $item->qty }}</td>
                                             <td>
+                                                <input type="hidden"
+                                                    name="items[{{ $po->po_id }}][{{ $i }}][qty_po]"
+                                                    value="{{ $item->qty }}">
+
                                                 <input type="number" class="form-control qty-retur"
                                                     data-row="{{ $po->po_id }}-{{ $i }}"
                                                     name="items[{{ $po->po_id }}][{{ $i }}][qty_retur]"
