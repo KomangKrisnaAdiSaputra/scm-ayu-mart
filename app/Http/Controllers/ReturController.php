@@ -115,6 +115,7 @@ class ReturController extends Controller
         abort_if($retur->status_retur !== 'Menunggu Konfirmasi', 400);
         $po = $retur->purchaseOrder;
         $produkPo = $po->detail()->where('produk_id', $retur->produk_id)->first();
+        $allReturs = $po->returs->where('status_retur', 'Menunggu Konfirmasi')->where('retur_id', '!=', $retur->retur_id)->values();
 
         $qtyMasuk = $produkPo->qty - $retur->qty_retur;
         if ($request->jenis_retur === 'dana') {
@@ -130,6 +131,14 @@ class ReturController extends Controller
                 'catatan' => $request->catatan
             ]);
         }
+
+        if ($allReturs->empty()) {
+            foreach ($po->detail->where('produk_id', '!=', $retur->produk_id)->values() as $val) {
+                $stokGud = StokGudang::where('produk_id', $val->produk_id)->lockForUpdate()->first();
+                $stokGud->increment('stok_total', $val->qty);
+            }
+        }
+
         $stok = StokGudang::where('produk_id', $retur->produk_id)->lockForUpdate()->first();
         $stok->increment('stok_total', $qtyMasuk);
 
@@ -221,46 +230,46 @@ class ReturController extends Controller
                 throw new \Exception('Detail PO tidak ditemukan');
             }
 
-            $qtyPo    = $poDetail->qty;
-            $qtyRetur = $retur->qty_retur;
+            // $qtyPo    = $poDetail->qty;
+            // $qtyRetur = $retur->qty_retur;
 
-            if ($qtyRetur > $qtyPo) {
-                throw new \Exception('Qty retur melebihi qty PO');
-            }
+            // if ($qtyRetur > $qtyPo) {
+            //     throw new \Exception('Qty retur melebihi qty PO');
+            // }
 
-            /**
-             * 1️⃣ Hitung qty masuk gudang
-             */
-            $qtyMasukGudang = $qtyPo - $qtyRetur;
+            // /**
+            //  * 1️⃣ Hitung qty masuk gudang
+            //  */
+            // $qtyMasukGudang = $qtyPo - $qtyRetur;
 
-            /**
-             * 2️⃣ Tambah stok gudang
-             */
-            $stok = StokGudang::where('produk_id', $retur->produk_id)
-                ->lockForUpdate()
-                ->first();
+            // /**
+            //  * 2️⃣ Tambah stok gudang
+            //  */
+            // $stok = StokGudang::where('produk_id', $retur->produk_id)
+            //     ->lockForUpdate()
+            //     ->first();
 
-            if (!$stok) {
-                throw new \Exception('Stok gudang tidak ditemukan');
-            }
+            // if (!$stok) {
+            //     throw new \Exception('Stok gudang tidak ditemukan');
+            // }
 
-            $stok->increment('stok_total', $qtyMasukGudang);
+            // $stok->increment('stok_total', $qtyMasukGudang);
 
-            /**
-             * 3️⃣ Update qty PO detail
-             */
-            $poDetail->update([
-                'qty' => $qtyMasukGudang
-            ]);
+            // /**
+            //  * 3️⃣ Update qty PO detail
+            //  */
+            // $poDetail->update([
+            //     'qty' => $qtyMasukGudang
+            // ]);
 
-            /**
-             * 4️⃣ Hitung ulang TOTAL PO
-             */
-            $totalPoBaru = $po->detail->sum(function ($item) {
-                return $item->qty * $item->harga;
-            });
+            // /**
+            //  * 4️⃣ Hitung ulang TOTAL PO
+            //  */
+            // $totalPoBaru = $po->detail->sum(function ($item) {
+            //     return $item->qty * $item->harga;
+            // });
 
-            $poUpdate['total_po'] = $totalPoBaru;
+            // $poUpdate['total_po'] = $totalPoBaru;
 
             $retur->update(['status_retur' => 'Dibayar']);
 

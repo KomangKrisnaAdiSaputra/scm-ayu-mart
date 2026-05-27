@@ -130,7 +130,7 @@
                                         @endif
 
                                         {{-- ================= MANAJER ================= --}}
-                                        @if (auth()->user()->role === 'Manajer')
+                                        @if (auth()->user()->role === 'Purchasing')
                                             {{-- BUAT PAYMENT --}}
                                             @if ($item->payment === 1 && !($item?->tb_payment ?? null))
                                                 <form action="{{ route('retur.store.payment') }}" method="POST"

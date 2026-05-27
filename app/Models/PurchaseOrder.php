@@ -21,6 +21,11 @@ class PurchaseOrder extends Model
         'catatan_privasi',
     ];
 
+    public function returs()
+    {
+        return $this->hasMany(Retur::class, 'po_id');
+    }
+
     public function invoice()
     {
         return $this->hasOne(Invoice::class, 'po_id');
